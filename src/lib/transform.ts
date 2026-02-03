@@ -69,15 +69,25 @@ function parseCampusName(location: string | null): string | null {
 }
 
 /**
+ * Additional data fetched separately per instance
+ */
+export interface InstanceExtras {
+  rooms?: string[];
+  eventType?: string | null;
+}
+
+/**
  * Transform a PCO event instance to local Event model
  *
  * @param instance - The PCO event instance resource
  * @param included - Array of included related resources
+ * @param extras - Additional data (rooms, eventType) fetched separately
  * @returns NewEvent ready for database insertion
  */
 export function transformPcoEventInstance(
   instance: PcoEventInstanceResource,
-  included: PcoIncludedResource[]
+  included: PcoIncludedResource[],
+  extras: InstanceExtras = {}
 ): NewEvent {
   // Find the parent event from included resources
   const eventId = instance.relationships?.event?.data.id;
@@ -100,12 +110,12 @@ export function transformPcoEventInstance(
     // Use instance ID as primary key (not event ID) since each instance is unique
     id: instance.id,
     title: event?.attributes.name || "Untitled Event",
-    eventType: null, // PCO doesn't have a direct event type field
+    eventType: extras.eventType ?? null,
     description: event?.attributes.description || null,
     startAt: instance.attributes.starts_at,
     endAt: instance.attributes.ends_at,
     campus: parseCampusName(instance.attributes.location),
-    rooms: null, // Rooms require separate API call, handled in sync
+    rooms: extras.rooms?.length ? JSON.stringify(extras.rooms) : null,
     contactName: owner ? getFullName(owner) : null,
     contactEmail: owner ? extractEmail(owner) : null,
     contactPhone: owner ? extractPhone(owner) : null,

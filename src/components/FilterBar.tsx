@@ -66,18 +66,20 @@ export function FilterBar({ eventTypes, visible }: FilterBarProps) {
         />
 
         <div className="flex flex-wrap gap-3">
-          <select
-            value={currentEventType}
-            onChange={(e) => updateFilters("eventType", e.target.value)}
-            className="h-10 min-w-[140px] rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-          >
-            <option value="">All Event Types</option>
-            {eventTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
+          {eventTypes.length > 0 && (
+            <select
+              value={currentEventType}
+              onChange={(e) => updateFilters("eventType", e.target.value)}
+              className="h-10 min-w-[140px] rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            >
+              <option value="">All Event Types</option>
+              {eventTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          )}
 
           <select
             value={currentStatus}

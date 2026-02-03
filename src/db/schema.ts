@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, primaryKey } from "drizzle-orm/sqlite-core";
 
 // Status enum values for event tracking
 export const EVENT_STATUSES = ["not_contacted", "contacted", "completed"] as const;
@@ -31,6 +31,24 @@ export const events = sqliteTable("events", {
   syncedAt: text("synced_at").notNull(), // Last sync timestamp
 });
 
+// Event request form submissions (per event instance)
+export const eventFormSubmissions = sqliteTable(
+  "event_form_submissions",
+  {
+    eventId: text("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    submissionId: text("submission_id").notNull(),
+    submittedAt: text("submitted_at"),
+    submitterName: text("submitter_name"),
+    submitterEmail: text("submitter_email"),
+    responses: text("responses"), // JSON array or object of field responses
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.eventId, table.submissionId] }),
+  })
+);
+
 // Local metadata for events (status, coordinator assignment)
 export const eventMeta = sqliteTable("event_meta", {
   eventId: text("event_id")
@@ -46,5 +64,7 @@ export type Coordinator = typeof coordinators.$inferSelect;
 export type NewCoordinator = typeof coordinators.$inferInsert;
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
+export type EventFormSubmission = typeof eventFormSubmissions.$inferSelect;
+export type NewEventFormSubmission = typeof eventFormSubmissions.$inferInsert;
 export type EventMeta = typeof eventMeta.$inferSelect;
 export type NewEventMeta = typeof eventMeta.$inferInsert;

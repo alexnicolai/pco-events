@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { getEvents, getFilterOptions, type EventFilters } from "@/lib/queries";
 import { EVENT_STATUSES, type EventStatus } from "@/db/schema";
-import { EventCard, EmptyState } from "@/components";
 import { EventListClient } from "./EventListClient";
 
 interface PageProps {
@@ -14,7 +13,6 @@ export default async function Home({ searchParams }: PageProps) {
   const filters: EventFilters = {
     startDate: typeof params.startDate === "string" ? params.startDate : undefined,
     endDate: typeof params.endDate === "string" ? params.endDate : undefined,
-    campus: typeof params.campus === "string" ? params.campus : undefined,
     eventType: typeof params.eventType === "string" ? params.eventType : undefined,
     status:
       typeof params.status === "string" && EVENT_STATUSES.includes(params.status as EventStatus)

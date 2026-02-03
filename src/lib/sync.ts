@@ -4,10 +4,19 @@
  */
 
 import { eq, inArray, sql } from "drizzle-orm";
-import { db, events, eventMeta } from "@/db";
-import { fetchApprovedEvents } from "./pco";
-import { transformPcoEventInstances } from "./transform";
+import { db, events, eventMeta, eventFormSubmissions } from "@/db";
+import {
+  fetchApprovedEvents,
+  fetchEventRequestSubmissionsMap,
+  fetchEventTags,
+  fetchInstanceRooms,
+} from "./pco";
+import type { PcoEventRequestSubmission } from "./pco";
+import { transformPcoEventInstance } from "./transform";
 import type { NewEvent, NewEventMeta } from "@/db/schema";
+import type { PcoEventInstanceResource, PcoIncludedResource, PcoEventResource } from "./pco";
+
+const EXCLUDED_EVENT_TYPES = new Set(["Practice", "Service"]);
 
 export interface SyncResult {
   created: number;
@@ -46,8 +55,99 @@ export async function syncEvents(daysAhead = 90): Promise<SyncResult> {
       return result;
     }
 
-    // 2. Transform to local model
-    const newEvents = transformPcoEventInstances(instances, included);
+    // 2. Build event ID lookup for fetching tags (tags are per-event, not per-instance)
+    const eventIdMap = new Map<string, string>(); // instanceId -> eventId
+    for (const instance of instances) {
+      const eventId = instance.relationships?.event?.data?.id;
+      if (eventId) {
+        eventIdMap.set(instance.id, eventId);
+      }
+    }
+
+    // 3. Fetch rooms and tags, then transform each instance
+    // PCO rate limit: 100 requests per 20 seconds = 200ms between requests
+    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const newEvents: NewEvent[] = [];
+
+    // Cache event tags to avoid duplicate requests (many instances share the same parent event)
+    const eventTagsCache = new Map<string, string[]>();
+    let submissionsByEventId = new Map<string, PcoEventRequestSubmission[]>();
+
+    try {
+      submissionsByEventId = await fetchEventRequestSubmissionsMap();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      result.errors.push(`Event request submissions: ${message}`);
+    }
+
+    for (const instance of instances) {
+      try {
+        // Fetch rooms for this instance
+        const roomResources = await fetchInstanceRooms(instance.id);
+        const rooms = roomResources.map((r) => r.attributes.name);
+
+        // Delay after rooms request
+        await delay(210);
+
+        // Fetch tags for the parent event (use cache if available)
+        const eventId = eventIdMap.get(instance.id);
+        let eventType: string | null = null;
+        let submissions: PcoEventRequestSubmission[] = [];
+        if (eventId) {
+          let tags = eventTagsCache.get(eventId);
+          if (!tags) {
+            tags = await fetchEventTags(eventId);
+            eventTagsCache.set(eventId, tags);
+            // Delay only if we made an API call
+            await delay(210);
+          }
+          eventType = tags.length > 0 ? tags[0] : null;
+        }
+
+        if (eventType && EXCLUDED_EVENT_TYPES.has(eventType)) {
+          continue;
+        }
+
+        if (eventId) {
+          submissions = submissionsByEventId.get(eventId) ?? [];
+        }
+
+        if (eventId) {
+          await db
+            .delete(eventFormSubmissions)
+            .where(eq(eventFormSubmissions.eventId, instance.id));
+
+          if (submissions.length > 0) {
+            await db.insert(eventFormSubmissions).values(
+              submissions.map((submission) => ({
+                eventId: instance.id,
+                submissionId: submission.id,
+                submittedAt: submission.submittedAt,
+                submitterName: submission.submitterName,
+                submitterEmail: submission.submitterEmail,
+                responses:
+                  submission.responses.length > 0
+                    ? JSON.stringify(submission.responses)
+                    : JSON.stringify(submission.rawAttributes),
+              }))
+            );
+          }
+        }
+
+        // Transform with extras
+        const event = transformPcoEventInstance(instance, included, {
+          rooms,
+          eventType,
+        });
+        newEvents.push(event);
+      } catch (error) {
+        // If fetching extras fails, transform without them
+        const event = transformPcoEventInstance(instance, included);
+        newEvents.push(event);
+        const message = error instanceof Error ? error.message : String(error);
+        result.errors.push(`Extras for instance ${instance.id}: ${message}`);
+      }
+    }
 
     // 3. Get existing event IDs for comparison
     const existingEvents = await db.select({ id: events.id }).from(events);

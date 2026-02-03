@@ -7,7 +7,6 @@ import type { EventWithMeta } from "@/lib/queries";
 interface EventListClientProps {
   events: EventWithMeta[];
   filterOptions: {
-    campuses: string[];
     eventTypes: string[];
   };
   lastSyncedAt?: string;
@@ -24,7 +23,6 @@ export function EventListClient({ events, filterOptions, lastSyncedAt }: EventLi
         lastSyncedAt={lastSyncedAt}
       />
       <FilterBar
-        campuses={filterOptions.campuses}
         eventTypes={filterOptions.eventTypes}
         visible={showFilters}
       />

@@ -134,9 +134,30 @@ export type PcoIncludedResource =
   | PcoRoomResource
   | PcoPersonResource;
 
-export interface PcoApiResponse<T> {
+export interface PcoFormResponse {
+  label: string;
+  value: string;
+}
+
+export interface PcoEventRequestSubmission {
+  id: string;
+  submittedAt: string | null;
+  submitterName: string | null;
+  submitterEmail: string | null;
+  responses: PcoFormResponse[];
+  rawAttributes: Record<string, unknown>;
+}
+
+interface PcoGenericResource {
+  type?: string;
+  id: string;
+  attributes?: Record<string, unknown>;
+  relationships?: Record<string, unknown>;
+}
+
+export interface PcoApiResponse<T, I = PcoIncludedResource> {
   data: T;
-  included?: PcoIncludedResource[];
+  included?: I[];
   meta?: {
     total_count: number;
     count: number;
@@ -181,7 +202,7 @@ export async function fetchApprovedEvents(daysAhead = 90): Promise<PcoEventInsta
     "filter": "future,approved",
     "where[starts_at][gte]": startDate,
     "where[starts_at][lte]": endDate,
-    "include": "event,event_times",
+    "include": "event,event.owner,event_times",
     "per_page": "100",
   });
 
@@ -215,6 +236,157 @@ export async function fetchApprovedEvents(daysAhead = 90): Promise<PcoEventInsta
   }
 
   return { instances: allInstances, included: allIncluded };
+}
+
+function pickFirstString(attributes: Record<string, unknown>, keys: string[]): string | null {
+  for (const key of keys) {
+    const value = attributes[key];
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value;
+    }
+  }
+  return null;
+}
+
+function normalizeResponses(
+  attributes: Record<string, unknown>,
+  included: PcoGenericResource[]
+): PcoFormResponse[] {
+  const responses: PcoFormResponse[] = [];
+
+  const responseCandidates = [
+    attributes.responses,
+    attributes.form_responses,
+    attributes.field_responses,
+    attributes.fields,
+    attributes.answers,
+  ];
+
+  for (const candidate of responseCandidates) {
+    if (Array.isArray(candidate)) {
+      for (const item of candidate) {
+        if (!item || typeof item !== "object") continue;
+        const record = item as Record<string, unknown>;
+        const label = pickFirstString(record, ["label", "question", "name", "title"]);
+        const value = pickFirstString(record, ["value", "answer", "response"]);
+        if (label && value) {
+          responses.push({ label, value });
+        }
+      }
+      if (responses.length > 0) return responses;
+    }
+
+    if (candidate && typeof candidate === "object") {
+      for (const [label, value] of Object.entries(candidate as Record<string, unknown>)) {
+        if (value === null || value === undefined) continue;
+        responses.push({ label, value: String(value) });
+      }
+      if (responses.length > 0) return responses;
+    }
+  }
+
+  for (const resource of included) {
+    const attrs = resource.attributes;
+    if (!attrs) continue;
+    const label = pickFirstString(attrs, ["label", "question", "name", "title"]);
+    const value = pickFirstString(attrs, ["value", "answer", "response"]);
+    if (label && value) {
+      responses.push({ label, value });
+    }
+  }
+
+  return responses;
+}
+
+/**
+ * Fetch all event request form submissions grouped by event ID.
+ * Calendar API only exposes limited submission attributes.
+ */
+export async function fetchEventRequestSubmissionsMap(): Promise<
+  Map<string, PcoEventRequestSubmission[]>
+> {
+  const params = new URLSearchParams({
+    include: "event,form_submission",
+    per_page: "100",
+  });
+
+  const submissionsByEventId = new Map<string, PcoEventRequestSubmission[]>();
+  let endpoint: string | null = `/event_requests?${params.toString()}`;
+
+  while (endpoint !== null) {
+    const response: PcoApiResponse<PcoGenericResource[], PcoGenericResource> = await pcoFetch(
+      endpoint
+    );
+    const requests = Array.isArray(response.data) ? response.data : [];
+    const included = Array.isArray(response.included) ? response.included : [];
+    const submissionById = new Map(
+      included
+        .filter((item: PcoGenericResource) => item.type === "FormSubmission")
+        .map((item: PcoGenericResource) => [item.id, item])
+    );
+
+    for (const request of requests) {
+      const eventId = (request.relationships as { event?: { data?: { id?: string } } })
+        ?.event?.data?.id;
+      const submissionId = (request.relationships as { form_submission?: { data?: { id?: string } } })
+        ?.form_submission?.data?.id;
+
+      if (!eventId || !submissionId) continue;
+
+      const submission = submissionById.get(submissionId);
+      const attributes = submission?.attributes ?? {};
+      const submittedAt = pickFirstString(attributes, ["submitted_at"]) || null;
+
+      const responses: PcoFormResponse[] = [];
+      if (typeof attributes.event_name === "string") {
+        responses.push({ label: "Event Name", value: attributes.event_name });
+      }
+      if (typeof attributes.starts_at === "string") {
+        responses.push({ label: "Start", value: attributes.starts_at });
+      }
+      if (typeof attributes.ends_at === "string") {
+        responses.push({ label: "End", value: attributes.ends_at });
+      }
+      if (typeof attributes.submitted_at === "string") {
+        responses.push({ label: "Submitted At", value: attributes.submitted_at });
+      }
+
+      const submissionRecord: PcoEventRequestSubmission = {
+        id: submissionId,
+        submittedAt,
+        submitterName: null,
+        submitterEmail: null,
+        responses,
+        rawAttributes: attributes,
+      };
+
+      const existing = submissionsByEventId.get(eventId) ?? [];
+      existing.push(submissionRecord);
+      submissionsByEventId.set(eventId, existing);
+    }
+
+    if (response.links?.next) {
+      const nextUrl = new URL(response.links.next);
+      endpoint = nextUrl.pathname.replace("/calendar/v2", "") + nextUrl.search;
+    } else if (response.meta?.next) {
+      params.set("offset", String(response.meta.next.offset));
+      endpoint = `/event_requests?${params.toString()}`;
+    } else {
+      endpoint = null;
+    }
+  }
+
+  return submissionsByEventId;
+}
+
+/**
+ * Fetch event request form submissions for a given event
+ */
+export async function fetchEventRequestFormSubmissions(
+  eventId: string
+): Promise<PcoEventRequestSubmission[]> {
+  const submissionsByEventId = await fetchEventRequestSubmissionsMap();
+  return submissionsByEventId.get(eventId) ?? [];
 }
 
 /**
@@ -252,7 +424,7 @@ export async function fetchEventDetails(eventId: string): Promise<PcoEventDetail
  */
 export async function fetchInstanceRooms(instanceId: string): Promise<PcoRoomResource[]> {
   const response = await pcoFetch<PcoApiResponse<PcoRoomResource[]>>(
-    `/event_instances/${instanceId}/event_times?include=room_setups`
+    `/event_instances/${instanceId}/event_times?include=room_setups,room_setups.room`
   );
 
   // Extract rooms from included resources
@@ -261,6 +433,38 @@ export async function fetchInstanceRooms(instanceId: string): Promise<PcoRoomRes
   );
 
   return rooms;
+}
+
+export interface PcoTagResource {
+  type: "Tag";
+  id: string;
+  attributes: {
+    color: string;
+    name: string;
+    position: number;
+  };
+}
+
+/**
+ * Fetch tags for an event
+ * @param eventId - The PCO event ID
+ * @returns Array of tag names
+ */
+export async function fetchEventTags(eventId: string): Promise<string[]> {
+  try {
+    const response = await pcoFetch<PcoApiResponse<PcoTagResource[]>>(
+      `/events/${eventId}/tags`
+    );
+
+    if (!Array.isArray(response.data)) {
+      return [];
+    }
+
+    return response.data.map((tag) => tag.attributes.name);
+  } catch {
+    // Return empty array if tags endpoint fails (might not exist for all events)
+    return [];
+  }
 }
 
 /**
