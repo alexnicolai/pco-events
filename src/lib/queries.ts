@@ -4,11 +4,18 @@ import {
   eventMeta,
   coordinators,
   eventFormSubmissions,
+  eventTimelineNotes,
   type EventStatus,
   type Coordinator,
   type EventFormSubmission,
+  type EventTimelineNote,
 } from "@/db";
-import { eq, and, gte, lte, sql } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
+
+const DEFAULT_COORDINATORS: Array<{ name: string; email: string | null }> = [
+  { name: "Bianca Nicolai", email: null },
+  { name: "Estera Groza", email: null },
+];
 
 export interface EventFilters {
   startDate?: string;
@@ -16,6 +23,7 @@ export interface EventFilters {
   campus?: string;
   eventType?: string;
   status?: EventStatus;
+  coordinatorId?: number | "unassigned";
 }
 
 export interface EventWithMeta {
@@ -48,16 +56,21 @@ export async function getEvents(filters: EventFilters = {}): Promise<EventWithMe
   const conditions = [];
 
   if (filters.startDate) {
-    conditions.push(gte(events.startAt, filters.startDate));
+    conditions.push(sql`datetime(${events.startAt}) >= datetime(${filters.startDate})`);
   }
   if (filters.endDate) {
-    conditions.push(lte(events.startAt, filters.endDate));
+    conditions.push(sql`datetime(${events.startAt}) <= datetime(${filters.endDate})`);
   }
   if (filters.campus) {
     conditions.push(eq(events.campus, filters.campus));
   }
   if (filters.eventType) {
     conditions.push(eq(events.eventType, filters.eventType));
+  }
+  if (filters.coordinatorId === "unassigned") {
+    conditions.push(sql`${eventMeta.coordinatorId} IS NULL`);
+  } else if (filters.coordinatorId !== undefined) {
+    conditions.push(eq(eventMeta.coordinatorId, filters.coordinatorId));
   }
 
   const results = await db
@@ -162,14 +175,20 @@ export async function getEventById(id: string): Promise<EventWithMeta | null> {
  */
 export async function getFilterOptions(): Promise<{
   eventTypes: string[];
+  coordinators: Array<{ id: number; name: string }>;
 }> {
   const typeResults = await db
     .selectDistinct({ eventType: events.eventType })
     .from(events)
     .where(sql`${events.eventType} IS NOT NULL`);
+  const coordinatorResults = await getCoordinators();
 
   return {
     eventTypes: typeResults.map((r) => r.eventType!).sort(),
+    coordinators: coordinatorResults.map((coordinator) => ({
+      id: coordinator.id,
+      name: coordinator.name,
+    })),
   };
 }
 
@@ -177,6 +196,48 @@ export async function getFilterOptions(): Promise<{
  * Fetch all coordinators ordered by name
  */
 export async function getCoordinators(): Promise<Coordinator[]> {
+  await db
+    .update(coordinators)
+    .set({ name: "Bianca Nicolai" })
+    .where(eq(coordinators.name, "Bianca Nicola"));
+
+  const existingRows = await db.select().from(coordinators).orderBy(coordinators.id);
+  const firstIdByName = new Map<string, number>();
+  const duplicateIdToCanonicalId = new Map<number, number>();
+
+  for (const coordinator of existingRows) {
+    const key = coordinator.name.trim().toLowerCase();
+    const canonicalId = firstIdByName.get(key);
+    if (canonicalId === undefined) {
+      firstIdByName.set(key, coordinator.id);
+      continue;
+    }
+    if (coordinator.id !== canonicalId) {
+      duplicateIdToCanonicalId.set(coordinator.id, canonicalId);
+    }
+  }
+
+  if (duplicateIdToCanonicalId.size > 0) {
+    for (const [duplicateId, canonicalId] of duplicateIdToCanonicalId.entries()) {
+      await db
+        .update(eventMeta)
+        .set({ coordinatorId: canonicalId })
+        .where(eq(eventMeta.coordinatorId, duplicateId));
+
+      await db.delete(coordinators).where(eq(coordinators.id, duplicateId));
+    }
+  }
+
+  const existing = await db.select({ name: coordinators.name }).from(coordinators);
+  const existingNames = new Set(existing.map((c) => c.name.toLowerCase()));
+  const missingDefaults = DEFAULT_COORDINATORS.filter(
+    (coordinator) => !existingNames.has(coordinator.name.toLowerCase())
+  );
+
+  if (missingDefaults.length > 0) {
+    await db.insert(coordinators).values(missingDefaults);
+  }
+
   return await db.select().from(coordinators).orderBy(coordinators.name);
 }
 
@@ -211,4 +272,58 @@ export async function updateEventMeta(
       updatedAt: now,
     });
   }
+}
+
+/**
+ * Fetch timeline notes for a specific event, newest first
+ */
+export async function getEventTimelineNotes(eventId: string): Promise<EventTimelineNote[]> {
+  return await db
+    .select()
+    .from(eventTimelineNotes)
+    .where(eq(eventTimelineNotes.eventId, eventId))
+    .orderBy(desc(eventTimelineNotes.createdAt), desc(eventTimelineNotes.id));
+}
+
+/**
+ * Create a timeline note for an event
+ */
+export async function createEventTimelineNote(
+  eventId: string,
+  authorName: string,
+  note: string
+): Promise<EventTimelineNote> {
+  const [created] = await db
+    .insert(eventTimelineNotes)
+    .values({
+      eventId,
+      authorName,
+      note,
+      createdAt: new Date().toISOString(),
+    })
+    .returning();
+
+  return created;
+}
+
+/**
+ * Delete a timeline note by event/note pair.
+ * Returns true when a note was deleted, false when target does not exist.
+ */
+export async function deleteEventTimelineNote(eventId: string, noteId: number): Promise<boolean> {
+  const existing = await db
+    .select({ id: eventTimelineNotes.id })
+    .from(eventTimelineNotes)
+    .where(and(eq(eventTimelineNotes.eventId, eventId), eq(eventTimelineNotes.id, noteId)))
+    .limit(1);
+
+  if (existing.length === 0) {
+    return false;
+  }
+
+  await db
+    .delete(eventTimelineNotes)
+    .where(and(eq(eventTimelineNotes.eventId, eventId), eq(eventTimelineNotes.id, noteId)));
+
+  return true;
 }

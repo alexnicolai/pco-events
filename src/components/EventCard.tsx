@@ -20,23 +20,43 @@ function formatDateTime(isoString: string): string {
   });
 }
 
+function coordinatorBadgeClass(name: string): string {
+  if (name === "Bianca Nicolai") {
+    return "bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300";
+  }
+  if (name === "Estera Groza") {
+    return "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300";
+  }
+  return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300";
+}
+
 export function EventCard({ event }: EventCardProps) {
   return (
     <Link
       href={`/events/${event.id}`}
-      className="block rounded-xl border border-zinc-200 bg-white p-4 transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
+      className="block rounded-xl border border-zinc-200 bg-white p-5 transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2">
+        <h3 className="line-clamp-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           {event.title}
         </h3>
-        <StatusPill status={event.status} />
+        <div className="flex shrink-0 items-center gap-1.5">
+          {event.coordinatorName && (
+            <span
+              title={event.coordinatorName}
+              className={`inline-flex max-w-36 items-center rounded-full px-3 py-1 text-sm font-medium ${coordinatorBadgeClass(event.coordinatorName)}`}
+            >
+              <span className="truncate">{event.coordinatorName}</span>
+            </span>
+          )}
+          <StatusPill status={event.status} />
+        </div>
       </div>
 
-      <div className="mt-3 space-y-1.5 text-sm text-zinc-600 dark:text-zinc-400">
+      <div className="mt-4 space-y-2 text-base text-zinc-600 dark:text-zinc-400">
         <div className="flex items-center gap-2">
           <svg
-            className="h-4 w-4 shrink-0"
+            className="h-5 w-5 shrink-0"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -50,25 +70,6 @@ export function EventCard({ event }: EventCardProps) {
           </svg>
           <span>{formatDateTime(event.startAt)}</span>
         </div>
-
-        {event.coordinatorName && (
-          <div className="flex items-center gap-2">
-            <svg
-              className="h-4 w-4 shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
-              />
-            </svg>
-            <span className="truncate">{event.coordinatorName}</span>
-          </div>
-        )}
       </div>
     </Link>
   );

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Header, FilterBar, EventCard, EmptyState } from "@/components";
 import type { EventWithMeta } from "@/lib/queries";
 
@@ -8,23 +7,18 @@ interface EventListClientProps {
   events: EventWithMeta[];
   filterOptions: {
     eventTypes: string[];
+    coordinators: Array<{ id: number; name: string }>;
   };
   lastSyncedAt?: string;
 }
 
 export function EventListClient({ events, filterOptions, lastSyncedAt }: EventListClientProps) {
-  const [showFilters, setShowFilters] = useState(false);
-
   return (
     <>
-      <Header
-        showFilters={showFilters}
-        onToggleFilters={() => setShowFilters(!showFilters)}
-        lastSyncedAt={lastSyncedAt}
-      />
+      <Header lastSyncedAt={lastSyncedAt} />
       <FilterBar
         eventTypes={filterOptions.eventTypes}
-        visible={showFilters}
+        coordinators={filterOptions.coordinators}
       />
       <main className="mx-auto max-w-3xl px-4 py-6">
         {events.length === 0 ? (

@@ -8,10 +8,10 @@ export function EmptyState({
   message = "Try adjusting your filters or check back later.",
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="mb-4 rounded-full bg-zinc-100 p-4 dark:bg-zinc-800">
+    <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
+      <div className="mb-5 rounded-full bg-zinc-100 p-4 dark:bg-zinc-800">
         <svg
-          className="h-8 w-8 text-zinc-400"
+          className="h-9 w-9 text-zinc-400"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -24,8 +24,8 @@ export function EmptyState({
           />
         </svg>
       </div>
-      <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">{title}</h3>
-      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{message}</p>
+      <h3 className="text-xl font-medium text-zinc-900 dark:text-zinc-100">{title}</h3>
+      <p className="mt-2 text-base text-zinc-500 dark:text-zinc-400">{message}</p>
     </div>
   );
 }

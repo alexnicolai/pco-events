@@ -36,7 +36,7 @@ export function CoordinatorSelector({
     <select
       value={coordinatorId ?? ""}
       onChange={handleChange}
-      className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+      className="h-11 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-base text-zinc-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
     >
       <option value="">Unassigned</option>
       {coordinators.map((c) => (

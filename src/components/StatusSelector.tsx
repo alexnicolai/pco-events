@@ -60,7 +60,7 @@ export function StatusSelector({ eventId, currentStatus }: StatusSelectorProps) 
           key={option.value}
           onClick={() => handleSelect(option.value)}
           disabled={loading}
-          className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+          className={`inline-flex min-h-11 items-center rounded-full px-4 py-2 text-base font-medium transition-colors ${
             status === option.value
               ? option.activeClass
               : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"

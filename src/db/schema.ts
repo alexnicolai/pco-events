@@ -49,6 +49,17 @@ export const eventFormSubmissions = sqliteTable(
   })
 );
 
+// Timeline notes manually added by internal users for event updates
+export const eventTimelineNotes = sqliteTable("event_timeline_notes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  eventId: text("event_id")
+    .notNull()
+    .references(() => events.id, { onDelete: "cascade" }),
+  authorName: text("author_name").notNull(),
+  note: text("note").notNull(),
+  createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
+});
+
 // Local metadata for events (status, coordinator assignment)
 export const eventMeta = sqliteTable("event_meta", {
   eventId: text("event_id")
@@ -66,5 +77,7 @@ export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
 export type EventFormSubmission = typeof eventFormSubmissions.$inferSelect;
 export type NewEventFormSubmission = typeof eventFormSubmissions.$inferInsert;
+export type EventTimelineNote = typeof eventTimelineNotes.$inferSelect;
+export type NewEventTimelineNote = typeof eventTimelineNotes.$inferInsert;
 export type EventMeta = typeof eventMeta.$inferSelect;
 export type NewEventMeta = typeof eventMeta.$inferInsert;

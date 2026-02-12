@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getEventById, getCoordinators } from "@/lib/queries";
+import { getEventById, getCoordinators, getEventTimelineNotes } from "@/lib/queries";
+import { Updates } from "@/components/Updates";
 import { DetailClient } from "./DetailClient";
 
 interface PageProps {
@@ -51,9 +52,10 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 export default async function EventDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const [event, coordinators] = await Promise.all([
+  const [event, coordinators, timelineNotes] = await Promise.all([
     getEventById(id),
     getCoordinators(),
+    getEventTimelineNotes(id),
   ]);
 
   if (!event) {
@@ -266,6 +268,10 @@ export default async function EventDetailPage({ params }: PageProps) {
             )}
           </Section>
         )}
+
+        <Section title="Updates">
+          <Updates eventId={event.id} initialNotes={timelineNotes} />
+        </Section>
       </main>
     </div>
   );
