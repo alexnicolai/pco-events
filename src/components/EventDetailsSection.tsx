@@ -1,10 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  EVENT_LOCATION_OPTIONS,
-  type EventLocation,
-} from "@/db/schema";
+import { EVENT_LOCATION_OPTIONS, type EventLocation } from "@/db/schema";
+import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface EventDetailsSectionProps {
   eventId: string;
@@ -59,9 +62,9 @@ function toNullableText(value: string): string | null {
 
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1">
-      <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{label}</p>
-      <div className="text-sm text-zinc-800 dark:text-zinc-200">{value}</div>
+    <div className="space-y-1">
+      <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">{label}</p>
+      <div className="text-base text-zinc-900 dark:text-zinc-100">{value}</div>
     </div>
   );
 }
@@ -82,10 +85,9 @@ export function EventDetailsSection({
   const [draft, setDraft] = useState<EventDetailsFormState>(saved);
 
   const selectedLocationLabels = useMemo(() => {
-    const labels = EVENT_LOCATION_OPTIONS.filter((option) =>
-      saved.eventLocations.includes(option.key)
-    ).map((option) => option.label);
-    return labels;
+    return EVENT_LOCATION_OPTIONS.filter((option) => saved.eventLocations.includes(option.key)).map(
+      (option) => option.label
+    );
   }, [saved.eventLocations]);
 
   function handleEdit() {
@@ -143,135 +145,116 @@ export function EventDetailsSection({
   }
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+    <Card>
+      <CardHeader className="flex-row items-center justify-between gap-3 pb-3">
+        <CardTitle className="text-sm uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           Event Details
-        </h3>
+        </CardTitle>
         {!isEditing && (
-          <button
-            type="button"
-            onClick={handleEdit}
-            className="inline-flex h-9 items-center rounded-lg border border-zinc-200 px-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-          >
+          <Button type="button" variant="outline" size="sm" onClick={handleEdit}>
             Edit
-          </button>
+          </Button>
         )}
-      </div>
-
-      {!isEditing ? (
-        <div className="space-y-4">
-          <DetailRow label="When you're setting up" value={saved.setupNotes || "Not set"} />
-          <DetailRow
-            label="Estimated number of people attending"
-            value={saved.estimatedAttendance || "Not set"}
-          />
-          <DetailRow
-            label="Where will the event be held?"
-            value={
-              selectedLocationLabels.length > 0 ? (
-                <ul className="list-disc list-inside">
-                  {selectedLocationLabels.map((label) => (
-                    <li key={label}>{label}</li>
-                  ))}
-                </ul>
-              ) : (
-                "Not set"
-              )
-            }
-          />
-          <DetailRow label="Additional Comments" value={saved.additionalComments || "Not set"} />
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              When you&apos;re setting up
-            </span>
-            <textarea
-              value={draft.setupNotes}
-              onChange={(event) => setDraft((prev) => ({ ...prev, setupNotes: event.target.value }))}
-              rows={3}
-              disabled={isSaving}
-              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {!isEditing ? (
+          <div className="space-y-4">
+            <DetailRow label="When you&apos;re setting up" value={saved.setupNotes || "Not set"} />
+            <DetailRow
+              label="Estimated number of people attending"
+              value={saved.estimatedAttendance || "Not set"}
             />
-          </label>
-
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Estimated number of people attending
-            </span>
-            <input
-              type="text"
-              value={draft.estimatedAttendance}
-              onChange={(event) =>
-                setDraft((prev) => ({ ...prev, estimatedAttendance: event.target.value }))
+            <DetailRow
+              label="Where will the event be held?"
+              value={
+                selectedLocationLabels.length > 0 ? (
+                  <ul className="list-inside list-disc space-y-1">
+                    {selectedLocationLabels.map((label) => (
+                      <li key={label}>{label}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  "Not set"
+                )
               }
-              disabled={isSaving}
-              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
             />
-          </label>
-
-          <fieldset>
-            <legend className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Where will the event be held?
-            </legend>
-            <div className="space-y-2">
-              {EVENT_LOCATION_OPTIONS.map((option) => (
-                <label
-                  key={option.key}
-                  className="flex items-start gap-2 text-sm text-zinc-800 dark:text-zinc-200"
-                >
-                  <input
-                    type="checkbox"
-                    checked={draft.eventLocations.includes(option.key)}
-                    onChange={(event) => toggleLocation(option.key, event.target.checked)}
-                    disabled={isSaving}
-                    className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-900"
-                  />
-                  <span>{option.label}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Additional Comments
-            </span>
-            <textarea
-              value={draft.additionalComments}
-              onChange={(event) =>
-                setDraft((prev) => ({ ...prev, additionalComments: event.target.value }))
-              }
-              rows={3}
-              disabled={isSaving}
-              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
-            />
-          </label>
-
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={isSaving}
-              className="inline-flex h-10 items-center rounded-lg bg-blue-600 px-4 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSaving ? "Saving..." : "Save"}
-            </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              disabled={isSaving}
-              className="inline-flex h-10 items-center rounded-lg border border-zinc-200 px-4 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-            >
-              Cancel
-            </button>
+            <DetailRow label="Additional Comments" value={saved.additionalComments || "Not set"} />
           </div>
-        </div>
-      )}
-    </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="setup-notes">When you&apos;re setting up</Label>
+              <Textarea
+                id="setup-notes"
+                value={draft.setupNotes}
+                onChange={(event) => setDraft((prev) => ({ ...prev, setupNotes: event.target.value }))}
+                rows={3}
+                disabled={isSaving}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="attendance">Estimated number of people attending</Label>
+              <Input
+                id="attendance"
+                type="text"
+                value={draft.estimatedAttendance}
+                onChange={(event) =>
+                  setDraft((prev) => ({ ...prev, estimatedAttendance: event.target.value }))
+                }
+                disabled={isSaving}
+              />
+            </div>
+
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Where will the event be held?
+              </legend>
+              <div className="space-y-2">
+                {EVENT_LOCATION_OPTIONS.map((option) => (
+                  <label
+                    key={option.key}
+                    className="flex items-start gap-2 rounded-lg p-1 text-base text-zinc-800 dark:text-zinc-200"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={draft.eventLocations.includes(option.key)}
+                      onChange={(event) => toggleLocation(option.key, event.target.checked)}
+                      disabled={isSaving}
+                      className="mt-1 h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400 dark:border-zinc-600 dark:bg-zinc-900"
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="additional-comments">Additional Comments</Label>
+              <Textarea
+                id="additional-comments"
+                value={draft.additionalComments}
+                onChange={(event) =>
+                  setDraft((prev) => ({ ...prev, additionalComments: event.target.value }))
+                }
+                rows={3}
+                disabled={isSaving}
+              />
+            </div>
+
+            {error && <Alert variant="destructive">{error}</Alert>}
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Save"}
+              </Button>
+              <Button type="button" variant="outline" onClick={handleCancel} disabled={isSaving}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

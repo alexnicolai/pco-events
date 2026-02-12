@@ -18,7 +18,7 @@ export function DetailClient({
   coordinators,
 }: DetailClientProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+    <div className="flex flex-col gap-3">
       <StatusSelector eventId={eventId} currentStatus={status} />
       <CoordinatorSelector
         eventId={eventId}

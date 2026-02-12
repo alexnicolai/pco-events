@@ -16,15 +16,12 @@ export function EventListClient({ events, filterOptions, lastSyncedAt }: EventLi
   return (
     <>
       <Header lastSyncedAt={lastSyncedAt} />
-      <FilterBar
-        eventTypes={filterOptions.eventTypes}
-        coordinators={filterOptions.coordinators}
-      />
-      <main className="mx-auto max-w-3xl px-4 py-6">
+      <FilterBar eventTypes={filterOptions.eventTypes} coordinators={filterOptions.coordinators} />
+      <main className="mx-auto max-w-2xl px-4 py-3 sm:py-5">
         {events.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2.5 sm:space-y-3">
             {events.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}

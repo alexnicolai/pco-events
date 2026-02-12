@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Coordinator } from "@/db/schema";
+import { SelectField } from "@/components/ui/select-field";
 
 interface CoordinatorSelectorProps {
   eventId: string;
@@ -33,10 +34,11 @@ export function CoordinatorSelector({
   }
 
   return (
-    <select
+    <SelectField
       value={coordinatorId ?? ""}
       onChange={handleChange}
-      className="h-11 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-base text-zinc-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+      className="min-w-48"
+      aria-label="Coordinator"
     >
       <option value="">Unassigned</option>
       {coordinators.map((c) => (
@@ -44,6 +46,6 @@ export function CoordinatorSelector({
           {c.name}
         </option>
       ))}
-    </select>
+    </SelectField>
   );
 }

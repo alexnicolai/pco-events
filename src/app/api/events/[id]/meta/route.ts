@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { EVENT_LOCATION_OPTIONS, EVENT_STATUSES } from "@/db/schema";
 import { updateEventMeta } from "@/lib/queries";
 
-const EVENT_LOCATION_KEYS = new Set(EVENT_LOCATION_OPTIONS.map((option) => option.key));
+const EVENT_LOCATION_KEYS = new Set<string>(EVENT_LOCATION_OPTIONS.map((option) => option.key));
 
 export async function PATCH(
   request: NextRequest,

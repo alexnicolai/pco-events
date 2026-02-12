@@ -1,8 +1,18 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useTransition } from "react";
-import { DateRangePicker } from "./DateRangePicker";
+import { useCallback, useMemo, useState, useTransition } from "react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { SelectField } from "@/components/ui/select-field";
 import type { EventStatus } from "@/db/schema";
 
 interface FilterBarProps {
@@ -17,145 +27,193 @@ const STATUS_OPTIONS: { value: EventStatus | ""; label: string }[] = [
   { value: "completed", label: "Completed" },
 ];
 
+type DateRange = "this_month" | "this_year";
+
+type DraftFilters = {
+  coordinatorId: string;
+  dateRange: DateRange;
+  eventType: string;
+  status: string;
+};
+
 export function FilterBar({ eventTypes, coordinators }: FilterBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const [open, setOpen] = useState(false);
 
-  const currentEventType = searchParams.get("eventType") ?? "";
-  const currentStatus = searchParams.get("status") ?? "";
-  const currentDateRangeParam = searchParams.get("dateRange") ?? "this_year";
-  const currentDateRange =
-    currentDateRangeParam === "this_month" || currentDateRangeParam === "this_year"
-      ? currentDateRangeParam
-      : "this_year";
-  const currentCoordinatorId = searchParams.get("coordinatorId") ?? "";
+  const current = useMemo<DraftFilters>(() => {
+    const dateRangeParam = searchParams.get("dateRange");
+    const dateRange: DateRange = dateRangeParam === "this_month" ? "this_month" : "this_year";
 
-  const updateFilters = useCallback(
-    (key: string, value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (value) {
-        params.set(key, value);
-      } else {
-        params.delete(key);
-      }
-      startTransition(() => {
-        router.push(`/?${params.toString()}`);
-      });
-    },
-    [router, searchParams]
-  );
+    return {
+      coordinatorId: searchParams.get("coordinatorId") ?? "",
+      dateRange,
+      eventType: searchParams.get("eventType") ?? "",
+      status: searchParams.get("status") ?? "",
+    };
+  }, [searchParams]);
 
-  const clearFilters = useCallback(() => {
+  const [draft, setDraft] = useState<DraftFilters>(current);
+
+  const activeFilterCount = Number(Boolean(current.coordinatorId)) +
+    Number(current.dateRange !== "this_year") +
+    Number(Boolean(current.eventType)) +
+    Number(Boolean(current.status));
+
+  const syncDraftWithCurrent = useCallback(() => {
+    setDraft(current);
+  }, [current]);
+
+  const applyDraft = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    const values: DraftFilters = {
+      coordinatorId: draft.coordinatorId,
+      dateRange: draft.dateRange,
+      eventType: draft.eventType,
+      status: draft.status,
+    };
+
+    if (values.coordinatorId) params.set("coordinatorId", values.coordinatorId);
+    else params.delete("coordinatorId");
+
+    if (values.dateRange !== "this_year") params.set("dateRange", values.dateRange);
+    else params.delete("dateRange");
+
+    if (values.eventType) params.set("eventType", values.eventType);
+    else params.delete("eventType");
+
+    if (values.status) params.set("status", values.status);
+    else params.delete("status");
+
     startTransition(() => {
-      router.push("/");
+      const qs = params.toString();
+      router.push(qs ? `/?${qs}` : "/");
+      setOpen(false);
     });
-  }, [router]);
+  }, [draft, router, searchParams]);
 
-  const hasFilters =
-    currentEventType || currentStatus || currentDateRange !== "this_year" || currentCoordinatorId;
+  const clearDraft = useCallback(() => {
+    setDraft({
+      coordinatorId: "",
+      dateRange: "this_year",
+      eventType: "",
+      status: "",
+    });
+  }, []);
 
   return (
-    <div
-      id="filter-panel"
-      className="border-b border-zinc-200 bg-zinc-50 px-4 py-4 dark:border-zinc-800 dark:bg-zinc-900/50"
-    >
-      <div className="mx-auto max-w-3xl space-y-4">
-        <div className="flex flex-wrap gap-3">
-          <div className="relative">
-            <select
-              value={currentCoordinatorId}
-              onChange={(e) => updateFilters("coordinatorId", e.target.value)}
-              className="h-11 min-w-[210px] appearance-none rounded-lg border border-zinc-300 bg-white px-3 pr-9 text-base text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-            >
-              <option value="">All Coordinators</option>
-              <option value="unassigned">Unassigned</option>
-              {coordinators.map((coordinator) => (
-                <option key={coordinator.id} value={coordinator.id}>
-                  {coordinator.name}
-                </option>
-              ))}
-            </select>
-            <svg
-              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 dark:text-zinc-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
+    <div className="border-b border-zinc-200 bg-white px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
+        <Button
+          variant="outline"
+          className="w-full justify-between sm:w-auto"
+          onClick={() => {
+            syncDraftWithCurrent();
+            setOpen(true);
+          }}
+          aria-controls="filter-panel"
+          aria-expanded={open}
+        >
+          <span>Filters</span>
+          {activeFilterCount > 0 ? (
+            <span className="rounded-full bg-zinc-950 px-2 py-0.5 text-xs text-white dark:bg-zinc-100 dark:text-zinc-950">
+              {activeFilterCount}
+            </span>
+          ) : null}
+        </Button>
+        {isPending && <span className="text-sm text-zinc-500 dark:text-zinc-400">Loading...</span>}
+      </div>
 
-          <DateRangePicker
-            value={currentDateRange}
-            onChange={(value) => updateFilters("dateRange", value)}
-          />
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent id="filter-panel">
+          <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+          <SheetHeader>
+            <SheetTitle>Filter Events</SheetTitle>
+            <SheetDescription>Apply filters to narrow your event list.</SheetDescription>
+          </SheetHeader>
 
-          {eventTypes.length > 0 && (
-            <div className="relative">
-              <select
-                value={currentEventType}
-                onChange={(e) => updateFilters("eventType", e.target.value)}
-                className="h-11 min-w-[170px] appearance-none rounded-lg border border-zinc-300 bg-white px-3 pr-9 text-base text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="coordinator-filter">Coordinator</Label>
+              <SelectField
+                id="coordinator-filter"
+                value={draft.coordinatorId}
+                onChange={(event) =>
+                  setDraft((prev) => ({ ...prev, coordinatorId: event.target.value }))
+                }
               >
-                <option value="">All Event Types</option>
-                {eventTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
+                <option value="">All Coordinators</option>
+                <option value="unassigned">Unassigned</option>
+                {coordinators.map((coordinator) => (
+                  <option key={coordinator.id} value={coordinator.id}>
+                    {coordinator.name}
                   </option>
                 ))}
-              </select>
-              <svg
-                className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 dark:text-zinc-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
+              </SelectField>
             </div>
-          )}
 
-          <div className="relative">
-            <select
-              value={currentStatus}
-              onChange={(e) => updateFilters("status", e.target.value)}
-              className="h-11 min-w-[170px] appearance-none rounded-lg border border-zinc-300 bg-white px-3 pr-9 text-base text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-            >
-              {STATUS_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <svg
-              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 dark:text-zinc-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
+            <div className="space-y-1.5">
+              <Label htmlFor="date-range-filter">Date Range</Label>
+              <SelectField
+                id="date-range-filter"
+                value={draft.dateRange}
+                onChange={(event) =>
+                  setDraft((prev) => ({ ...prev, dateRange: event.target.value as DateRange }))
+                }
+              >
+                <option value="this_month">This month</option>
+                <option value="this_year">This year</option>
+              </SelectField>
+            </div>
+
+            {eventTypes.length > 0 && (
+              <div className="space-y-1.5">
+                <Label htmlFor="event-type-filter">Event Type</Label>
+                <SelectField
+                  id="event-type-filter"
+                  value={draft.eventType}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, eventType: event.target.value }))
+                  }
+                >
+                  <option value="">All Event Types</option>
+                  {eventTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </SelectField>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <Label htmlFor="status-filter">Status</Label>
+              <SelectField
+                id="status-filter"
+                value={draft.status}
+                onChange={(event) => setDraft((prev) => ({ ...prev, status: event.target.value }))}
+              >
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </SelectField>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center justify-between">
-          {hasFilters && (
-            <button
-              onClick={clearFilters}
-              className="text-base font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-            >
-              Clear all filters
-            </button>
-          )}
-          {isPending && (
-            <span className="text-base text-zinc-500 dark:text-zinc-400">Loading...</span>
-          )}
-        </div>
-      </div>
+          <SheetFooter>
+            <Button variant="outline" className="flex-1" onClick={clearDraft}>
+              Clear
+            </Button>
+            <Button className="flex-1" onClick={applyDraft} disabled={isPending}>
+              Apply
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

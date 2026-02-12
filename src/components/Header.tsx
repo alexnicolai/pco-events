@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Alert } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
   lastSyncedAt?: string;
@@ -24,7 +27,7 @@ export function Header({ lastSyncedAt }: HeaderProps) {
       const res = await fetch("/api/sync", { method: "POST" });
       if (res.status === 429) {
         const data = await res.json();
-        setSyncError(data.message ?? "Rate limited — try again shortly.");
+        setSyncError(data.message ?? "Rate limited. Try again shortly.");
       } else if (!res.ok) {
         setSyncError("Sync failed");
       } else {
@@ -38,52 +41,34 @@ export function Header({ lastSyncedAt }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/80 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/80">
-      <div className="mx-auto flex h-16 max-w-3xl items-center justify-between gap-3 px-4">
-        <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">PCO Events</h1>
+    <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 dark:border-zinc-800 dark:bg-zinc-950/95">
+      <div className="mx-auto flex h-14 max-w-2xl items-center justify-between gap-3 px-4">
+        <h1 className="text-[17px] font-semibold text-zinc-950 dark:text-zinc-50">PCO Events</h1>
         <div className="flex items-center gap-2">
           {lastSyncedAt && (
-            <span className="hidden text-xs text-zinc-500 dark:text-zinc-400 sm:block">
+            <Badge variant="outline" className="hidden sm:inline-flex">
               Synced {formatRelativeTime(lastSyncedAt)}
-            </span>
+            </Badge>
           )}
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-base font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-            aria-label="Sync events"
-          >
-            <svg
-              className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
-              />
-            </svg>
-            <span>Sync</span>
-          </button>
+          <Button onClick={handleSync} disabled={syncing} size="default" className="min-w-20">
+            {syncing ? "Syncing..." : "Sync"}
+          </Button>
         </div>
       </div>
       {syncError && (
-        <div className="mx-auto max-w-3xl px-4 pb-2">
-          <div className="flex items-center justify-between rounded-md bg-red-50 px-3 py-2 text-base text-red-700 dark:bg-red-900/30 dark:text-red-300">
+        <div className="mx-auto max-w-2xl px-4 pb-2">
+          <Alert variant="destructive" className="flex items-center justify-between gap-3">
             <span>{syncError}</span>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setSyncError(null)}
-              className="ml-4 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
               aria-label="Dismiss"
+              className="h-8 px-2"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+              Close
+            </Button>
+          </Alert>
         </div>
       )}
     </header>

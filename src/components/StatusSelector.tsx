@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { EventStatus } from "@/db/schema";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const STATUS_OPTIONS: {
   value: EventStatus;
@@ -11,17 +13,17 @@ const STATUS_OPTIONS: {
   {
     value: "not_contacted",
     label: "Not Contacted",
-    activeClass: "bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200",
+    activeClass: "bg-zinc-200 text-zinc-800 dark:bg-zinc-700 dark:text-zinc-100",
   },
   {
     value: "contacted",
     label: "Contacted",
-    activeClass: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+    activeClass: "bg-zinc-800 text-zinc-100 dark:bg-zinc-200 dark:text-zinc-950",
   },
   {
     value: "completed",
     label: "Completed",
-    activeClass: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
+    activeClass: "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950",
   },
 ];
 
@@ -56,18 +58,20 @@ export function StatusSelector({ eventId, currentStatus }: StatusSelectorProps) 
   return (
     <div className="flex flex-wrap gap-2">
       {STATUS_OPTIONS.map((option) => (
-        <button
+        <Button
           key={option.value}
           onClick={() => handleSelect(option.value)}
           disabled={loading}
-          className={`inline-flex min-h-11 items-center rounded-full px-4 py-2 text-base font-medium transition-colors ${
+          variant="secondary"
+          className={cn(
+            "h-11 rounded-full px-4 text-sm",
             status === option.value
               ? option.activeClass
-              : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
-          } ${loading ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+              : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          )}
         >
           {option.label}
-        </button>
+        </Button>
       ))}
     </div>
   );

@@ -1,9 +1,15 @@
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getEventById, getCoordinators, getEventTimelineNotes } from "@/lib/queries";
-import { Updates } from "@/components/Updates";
 import { EventDetailsSection } from "@/components/EventDetailsSection";
 import { DetailClient } from "./DetailClient";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+const Updates = dynamic(() => import("@/components/Updates").then((mod) => mod.Updates), {
+  loading: () => <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading updates...</p>,
+});
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -33,20 +39,24 @@ function parseJsonSafe<T>(value: string | null, fallback: T): T {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 mb-3">
-        {title}
-      </h3>
-      <div className="space-y-2">{children}</div>
-    </div>
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">{children}</CardContent>
+    </Card>
   );
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-3">
-      <span className="w-20 shrink-0 text-sm text-zinc-500 dark:text-zinc-400">{label}</span>
-      <span className="text-sm text-zinc-800 dark:text-zinc-200">{children}</span>
+    <div className="flex flex-col gap-1 sm:flex-row sm:gap-3">
+      <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400 sm:w-24 sm:shrink-0">
+        {label}
+      </span>
+      <span className="text-base text-zinc-800 dark:text-zinc-200">{children}</span>
     </div>
   );
 }
@@ -68,68 +78,57 @@ export default async function EventDetailPage({ params }: PageProps) {
   const hasForm = Boolean(event.formUrl);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
-      <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/80 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/80">
-        <div className="mx-auto flex h-14 max-w-3xl items-center gap-4 px-4">
-          <Link
-            href="/"
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            aria-label="Back to events"
-          >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-              />
-            </svg>
+    <div className="min-h-screen bg-white dark:bg-black">
+      <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 dark:border-zinc-800 dark:bg-zinc-950/95">
+        <div className="mx-auto flex h-14 max-w-2xl items-center gap-2 px-4">
+          <Link href="/" aria-label="Back to events" className="inline-flex h-10 w-10 items-center justify-center rounded-full text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+                />
+              </svg>
           </Link>
-          <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-            {event.title}
-          </h1>
+          <h1 className="truncate text-[17px] font-semibold text-zinc-900 dark:text-zinc-100">{event.title}</h1>
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 py-6 space-y-4">
-        {/* Header: title + interactive status & coordinator controls */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="flex items-start gap-3 mb-3">
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-              {event.title}
-            </h2>
-            {event.eventType && (
-              <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-900/30 dark:text-blue-300 dark:ring-blue-300/20">
-                {event.eventType}
-              </span>
-            )}
-          </div>
-          <DetailClient
-            eventId={event.id}
-            status={event.status}
-            coordinatorId={event.coordinatorId}
-            coordinators={coordinators}
-          />
-        </div>
+      <main className="mx-auto max-w-2xl space-y-3 px-4 py-3 sm:py-5">
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex flex-wrap items-start gap-2">
+              <CardTitle className="text-[18px] leading-tight">{event.title}</CardTitle>
+              {event.eventType && <Badge variant="default">{event.eventType}</Badge>}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <DetailClient
+              eventId={event.id}
+              status={event.status}
+              coordinatorId={event.coordinatorId}
+              coordinators={coordinators}
+            />
+          </CardContent>
+        </Card>
 
-        {/* When */}
         <Section title="When">
           <Row label="Start">{formatDateTime(event.startAt)}</Row>
           {event.endAt && <Row label="End">{formatDateTime(event.endAt)}</Row>}
         </Section>
 
-        {/* Where */}
         {(event.campus || rooms.length > 0) && (
           <Section title="Where">
             {event.campus && <Row label="Campus">{event.campus}</Row>}
             {rooms.length > 0 && (
               <Row label="Rooms">
-                <ul className="list-disc list-inside">
+                <ul className="list-inside list-disc space-y-1">
                   {rooms.map((room, i) => (
                     <li key={i}>{room}</li>
                   ))}
@@ -139,26 +138,19 @@ export default async function EventDetailPage({ params }: PageProps) {
           </Section>
         )}
 
-        {/* Who */}
         {hasContact && (
           <Section title="Who">
             {event.contactName && <Row label="Contact">{event.contactName}</Row>}
             {event.contactEmail && (
               <Row label="Email">
-                <a
-                  href={`mailto:${event.contactEmail}`}
-                  className="text-blue-600 hover:underline dark:text-blue-400"
-                >
+                <a href={`mailto:${event.contactEmail}`} className="font-medium text-zinc-900 hover:underline dark:text-zinc-100">
                   {event.contactEmail}
                 </a>
               </Row>
             )}
             {event.contactPhone && (
               <Row label="Phone">
-                <a
-                  href={`tel:${event.contactPhone}`}
-                  className="text-blue-600 hover:underline dark:text-blue-400"
-                >
+                <a href={`tel:${event.contactPhone}`} className="font-medium text-zinc-900 hover:underline dark:text-zinc-100">
                   {event.contactPhone}
                 </a>
               </Row>
@@ -167,34 +159,15 @@ export default async function EventDetailPage({ params }: PageProps) {
           </Section>
         )}
 
-        {/* Form Submission */}
         {hasForm && (
           <Section title="Form Submission">
             <a
               href={event.formUrl!}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium dark:text-blue-400 dark:hover:text-blue-300"
+              className="inline-flex min-h-11 items-center gap-1 text-[15px] font-medium text-zinc-900 hover:underline dark:text-zinc-100"
             >
               View submitted form in Planning Center
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M13.5 6H9.75A2.25 2.25 0 007.5 8.25v8.25a2.25 2.25 0 002.25 2.25h8.25A2.25 2.25 0 0120.25 16.5V12.75"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 3h6m0 0v6m0-6L10 13"
-                />
-              </svg>
             </a>
           </Section>
         )}
