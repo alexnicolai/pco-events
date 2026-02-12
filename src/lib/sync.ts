@@ -14,7 +14,6 @@ import {
 import type { PcoEventRequestSubmission } from "./pco";
 import { transformPcoEventInstance } from "./transform";
 import type { NewEvent, NewEventMeta } from "@/db/schema";
-import type { PcoEventInstanceResource, PcoIncludedResource, PcoEventResource } from "./pco";
 
 const EXCLUDED_EVENT_TYPES = new Set(["Practice", "Service"]);
 
@@ -24,6 +23,29 @@ export interface SyncResult {
   deleted: number;
   total: number;
   errors: string[];
+}
+
+function pickMostRecentSubmission(
+  submissions: PcoEventRequestSubmission[]
+): PcoEventRequestSubmission | null {
+  if (submissions.length === 0) return null;
+
+  const submissionWithIndex = submissions.map((submission, index) => ({
+    submission,
+    index,
+    timestamp: submission.submittedAt ? Date.parse(submission.submittedAt) : Number.NaN,
+  }));
+
+  submissionWithIndex.sort((a, b) => {
+    const aValid = Number.isFinite(a.timestamp);
+    const bValid = Number.isFinite(b.timestamp);
+    if (aValid && bValid) return b.timestamp - a.timestamp;
+    if (aValid) return -1;
+    if (bValid) return 1;
+    return b.index - a.index;
+  });
+
+  return submissionWithIndex[0].submission;
 }
 
 /**
@@ -125,6 +147,8 @@ export async function syncEvents(daysAhead = 90): Promise<SyncResult> {
                 submittedAt: submission.submittedAt,
                 submitterName: submission.submitterName,
                 submitterEmail: submission.submitterEmail,
+                submitterPhone: submission.submitterPhone,
+                submitterPersonId: submission.submitterPersonId,
                 responses:
                   submission.responses.length > 0
                     ? JSON.stringify(submission.responses)
@@ -139,6 +163,12 @@ export async function syncEvents(daysAhead = 90): Promise<SyncResult> {
           rooms,
           eventType,
         });
+        const mostRecentSubmission = pickMostRecentSubmission(submissions);
+        if (mostRecentSubmission) {
+          event.contactName = mostRecentSubmission.submitterName || event.contactName;
+          event.contactEmail = mostRecentSubmission.submitterEmail || event.contactEmail;
+          event.contactPhone = mostRecentSubmission.submitterPhone || event.contactPhone;
+        }
         newEvents.push(event);
       } catch (error) {
         // If fetching extras fails, transform without them

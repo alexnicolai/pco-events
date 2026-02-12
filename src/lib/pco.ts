@@ -5,7 +5,8 @@
  * API Docs: https://developer.planning.center/docs/#/apps/calendar
  */
 
-const PCO_BASE_URL = "https://api.planningcenteronline.com/calendar/v2";
+const PCO_CALENDAR_BASE_URL = "https://api.planningcenteronline.com/calendar/v2";
+const PCO_PEOPLE_BASE_URL = "https://api.planningcenteronline.com/people/v2";
 
 // Get auth credentials from environment
 function getAuthHeader(): string {
@@ -21,8 +22,8 @@ function getAuthHeader(): string {
 }
 
 // Generic fetch wrapper with auth and error handling
-async function pcoFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const url = `${PCO_BASE_URL}${endpoint}`;
+async function pcoFetch<T>(baseUrl: string, endpoint: string, options?: RequestInit): Promise<T> {
+  const url = `${baseUrl}${endpoint}`;
 
   const response = await fetch(url, {
     ...options,
@@ -39,6 +40,14 @@ async function pcoFetch<T>(endpoint: string, options?: RequestInit): Promise<T> 
   }
 
   return response.json();
+}
+
+async function pcoCalendarFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  return pcoFetch<T>(PCO_CALENDAR_BASE_URL, endpoint, options);
+}
+
+async function pcoPeopleFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  return pcoFetch<T>(PCO_PEOPLE_BASE_URL, endpoint, options);
 }
 
 // ============================================================================
@@ -144,6 +153,8 @@ export interface PcoEventRequestSubmission {
   submittedAt: string | null;
   submitterName: string | null;
   submitterEmail: string | null;
+  submitterPhone: string | null;
+  submitterPersonId: string | null;
   responses: PcoFormResponse[];
   rawAttributes: Record<string, unknown>;
 }
@@ -153,6 +164,40 @@ interface PcoGenericResource {
   id: string;
   attributes?: Record<string, unknown>;
   relationships?: Record<string, unknown>;
+}
+
+interface PcoPeoplePersonResource {
+  type: "Person";
+  id: string;
+  attributes?: {
+    name?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+  };
+}
+
+interface PcoPeopleEmailResource {
+  type: "Email";
+  id: string;
+  attributes?: {
+    address?: string | null;
+    primary?: boolean;
+  };
+}
+
+interface PcoPeoplePhoneResource {
+  type: "PhoneNumber";
+  id: string;
+  attributes?: {
+    national?: string | null;
+    number?: string | null;
+    primary?: boolean;
+  };
+}
+
+interface PcoPeoplePersonResponse {
+  data: PcoPeoplePersonResource;
+  included?: Array<PcoPeopleEmailResource | PcoPeoplePhoneResource>;
 }
 
 export interface PcoApiResponse<T, I = PcoIncludedResource> {
@@ -212,7 +257,8 @@ export async function fetchApprovedEvents(daysAhead = 90): Promise<PcoEventInsta
 
   // Paginate through all results
   while (endpoint !== null) {
-    const response: PcoApiResponse<PcoEventInstanceResource[]> = await pcoFetch(endpoint);
+    const response: PcoApiResponse<PcoEventInstanceResource[]> =
+      await pcoCalendarFetch(endpoint);
 
     if (Array.isArray(response.data)) {
       allInstances.push(...response.data);
@@ -248,54 +294,68 @@ function pickFirstString(attributes: Record<string, unknown>, keys: string[]): s
   return null;
 }
 
-function normalizeResponses(
-  attributes: Record<string, unknown>,
-  included: PcoGenericResource[]
-): PcoFormResponse[] {
-  const responses: PcoFormResponse[] = [];
+interface PersonContactInfo {
+  personId: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+}
 
-  const responseCandidates = [
-    attributes.responses,
-    attributes.form_responses,
-    attributes.field_responses,
-    attributes.fields,
-    attributes.answers,
-  ];
+function getPrimaryEmail(
+  included: Array<PcoPeopleEmailResource | PcoPeoplePhoneResource>
+): string | null {
+  const emails = included.filter(
+    (resource): resource is PcoPeopleEmailResource => resource.type === "Email"
+  );
+  if (emails.length === 0) return null;
+  const primaryEmail = emails.find((email) => email.attributes?.primary) ?? emails[0];
+  const address = primaryEmail.attributes?.address;
+  return typeof address === "string" && address.trim().length > 0 ? address : null;
+}
 
-  for (const candidate of responseCandidates) {
-    if (Array.isArray(candidate)) {
-      for (const item of candidate) {
-        if (!item || typeof item !== "object") continue;
-        const record = item as Record<string, unknown>;
-        const label = pickFirstString(record, ["label", "question", "name", "title"]);
-        const value = pickFirstString(record, ["value", "answer", "response"]);
-        if (label && value) {
-          responses.push({ label, value });
-        }
-      }
-      if (responses.length > 0) return responses;
-    }
-
-    if (candidate && typeof candidate === "object") {
-      for (const [label, value] of Object.entries(candidate as Record<string, unknown>)) {
-        if (value === null || value === undefined) continue;
-        responses.push({ label, value: String(value) });
-      }
-      if (responses.length > 0) return responses;
-    }
+function getPrimaryPhone(
+  included: Array<PcoPeopleEmailResource | PcoPeoplePhoneResource>
+): string | null {
+  const phones = included.filter(
+    (resource): resource is PcoPeoplePhoneResource => resource.type === "PhoneNumber"
+  );
+  if (phones.length === 0) return null;
+  const primaryPhone = phones.find((phone) => phone.attributes?.primary) ?? phones[0];
+  const national = primaryPhone.attributes?.national;
+  if (typeof national === "string" && national.trim().length > 0) {
+    return national;
   }
+  const number = primaryPhone.attributes?.number;
+  return typeof number === "string" && number.trim().length > 0 ? number : null;
+}
 
-  for (const resource of included) {
-    const attrs = resource.attributes;
-    if (!attrs) continue;
-    const label = pickFirstString(attrs, ["label", "question", "name", "title"]);
-    const value = pickFirstString(attrs, ["value", "answer", "response"]);
-    if (label && value) {
-      responses.push({ label, value });
-    }
+function getPersonName(attributes: PcoPeoplePersonResource["attributes"]): string | null {
+  if (!attributes) return null;
+  if (typeof attributes.name === "string" && attributes.name.trim().length > 0) {
+    return attributes.name;
   }
+  const parts = [attributes.first_name, attributes.last_name].filter(
+    (part): part is string => typeof part === "string" && part.trim().length > 0
+  );
+  return parts.length > 0 ? parts.join(" ") : null;
+}
 
-  return responses;
+async function fetchPersonContact(personId: string): Promise<PersonContactInfo | null> {
+  try {
+    const response = await pcoPeopleFetch<PcoPeoplePersonResponse>(
+      `/people/${personId}?include=emails,phone_numbers`
+    );
+    const included = Array.isArray(response.included) ? response.included : [];
+
+    return {
+      personId,
+      name: getPersonName(response.data?.attributes),
+      email: getPrimaryEmail(included),
+      phone: getPrimaryPhone(included),
+    };
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -311,12 +371,12 @@ export async function fetchEventRequestSubmissionsMap(): Promise<
   });
 
   const submissionsByEventId = new Map<string, PcoEventRequestSubmission[]>();
+  const personContactCache = new Map<string, PersonContactInfo | null>();
   let endpoint: string | null = `/event_requests?${params.toString()}`;
 
   while (endpoint !== null) {
-    const response: PcoApiResponse<PcoGenericResource[], PcoGenericResource> = await pcoFetch(
-      endpoint
-    );
+    const response: PcoApiResponse<PcoGenericResource[], PcoGenericResource> =
+      await pcoCalendarFetch(endpoint);
     const requests = Array.isArray(response.data) ? response.data : [];
     const included = Array.isArray(response.included) ? response.included : [];
     const submissionById = new Map(
@@ -330,6 +390,9 @@ export async function fetchEventRequestSubmissionsMap(): Promise<
         ?.event?.data?.id;
       const submissionId = (request.relationships as { form_submission?: { data?: { id?: string } } })
         ?.form_submission?.data?.id;
+      const submitterPersonId = (request.relationships as {
+        person?: { data?: { id?: string } };
+      })?.person?.data?.id;
 
       if (!eventId || !submissionId) continue;
 
@@ -351,11 +414,21 @@ export async function fetchEventRequestSubmissionsMap(): Promise<
         responses.push({ label: "Submitted At", value: attributes.submitted_at });
       }
 
+      let personContact: PersonContactInfo | null = null;
+      if (submitterPersonId) {
+        if (!personContactCache.has(submitterPersonId)) {
+          personContactCache.set(submitterPersonId, await fetchPersonContact(submitterPersonId));
+        }
+        personContact = personContactCache.get(submitterPersonId) ?? null;
+      }
+
       const submissionRecord: PcoEventRequestSubmission = {
         id: submissionId,
         submittedAt,
-        submitterName: null,
-        submitterEmail: null,
+        submitterName: personContact?.name ?? null,
+        submitterEmail: personContact?.email ?? null,
+        submitterPhone: personContact?.phone ?? null,
+        submitterPersonId: submitterPersonId ?? null,
         responses,
         rawAttributes: attributes,
       };
@@ -408,7 +481,7 @@ export async function fetchEventDetails(eventId: string): Promise<PcoEventDetail
     "include": "event_instances,event_times,owner",
   });
 
-  const response = await pcoFetch<PcoApiResponse<PcoEventResource>>(
+  const response = await pcoCalendarFetch<PcoApiResponse<PcoEventResource>>(
     `/events/${eventId}?${params.toString()}`
   );
 
@@ -423,7 +496,7 @@ export async function fetchEventDetails(eventId: string): Promise<PcoEventDetail
  * @param instanceId - The PCO event instance ID
  */
 export async function fetchInstanceRooms(instanceId: string): Promise<PcoRoomResource[]> {
-  const response = await pcoFetch<PcoApiResponse<PcoRoomResource[]>>(
+  const response = await pcoCalendarFetch<PcoApiResponse<PcoRoomResource[]>>(
     `/event_instances/${instanceId}/event_times?include=room_setups,room_setups.room`
   );
 
@@ -452,7 +525,7 @@ export interface PcoTagResource {
  */
 export async function fetchEventTags(eventId: string): Promise<string[]> {
   try {
-    const response = await pcoFetch<PcoApiResponse<PcoTagResource[]>>(
+    const response = await pcoCalendarFetch<PcoApiResponse<PcoTagResource[]>>(
       `/events/${eventId}/tags`
     );
 
@@ -474,7 +547,7 @@ export async function fetchEventTags(eventId: string): Promise<string[]> {
 export async function testConnection(): Promise<boolean> {
   try {
     // Fetch organization info as a simple health check
-    const response = await pcoFetch<{ data: { type: string } }>("");
+    const response = await pcoCalendarFetch<{ data: { type: string } }>("");
     return response.data?.type === "Organization";
   } catch {
     return false;

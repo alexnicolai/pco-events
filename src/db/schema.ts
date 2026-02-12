@@ -4,6 +4,15 @@ import { sqliteTable, text, integer, primaryKey } from "drizzle-orm/sqlite-core"
 export const EVENT_STATUSES = ["not_contacted", "contacted", "completed"] as const;
 export type EventStatus = (typeof EVENT_STATUSES)[number];
 
+export const EVENT_LOCATION_OPTIONS = [
+  { key: "main_sanctuary", label: "Main Sanctuary" },
+  { key: "fellowship_hall", label: "Fellowship Hall" },
+  { key: "gym", label: "Gym" },
+  { key: "b3_general_rooms_lobby", label: "B3 General (rooms and lobby)" },
+] as const;
+
+export type EventLocation = (typeof EVENT_LOCATION_OPTIONS)[number]["key"];
+
 // Coordinators who can be assigned to events
 export const coordinators = sqliteTable("coordinators", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -42,6 +51,8 @@ export const eventFormSubmissions = sqliteTable(
     submittedAt: text("submitted_at"),
     submitterName: text("submitter_name"),
     submitterEmail: text("submitter_email"),
+    submitterPhone: text("submitter_phone"),
+    submitterPersonId: text("submitter_person_id"),
     responses: text("responses"), // JSON array or object of field responses
   },
   (table) => ({
@@ -67,6 +78,10 @@ export const eventMeta = sqliteTable("event_meta", {
     .references(() => events.id, { onDelete: "cascade" }),
   status: text("status").$type<EventStatus>().notNull().default("not_contacted"),
   coordinatorId: integer("coordinator_id").references(() => coordinators.id),
+  setupNotes: text("setup_notes"),
+  estimatedAttendance: text("estimated_attendance"),
+  eventLocations: text("event_locations"), // JSON array of location keys
+  additionalComments: text("additional_comments"),
   updatedAt: text("updated_at").notNull().default("CURRENT_TIMESTAMP"),
 });
 

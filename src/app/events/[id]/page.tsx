@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getEventById, getCoordinators, getEventTimelineNotes } from "@/lib/queries";
 import { Updates } from "@/components/Updates";
+import { EventDetailsSection } from "@/components/EventDetailsSection";
 import { DetailClient } from "./DetailClient";
 
 interface PageProps {
@@ -63,11 +64,8 @@ export default async function EventDetailPage({ params }: PageProps) {
   }
 
   const rooms: string[] = parseJsonSafe(event.rooms, []);
-  const formFields: Record<string, string> = parseJsonSafe(event.formFields, {});
-  const formSubmissions = event.formSubmissions ?? [];
   const hasContact = event.contactName || event.contactEmail || event.contactPhone || event.owner;
-  const hasForm =
-    event.formUrl || Object.keys(formFields).length > 0 || formSubmissions.length > 0;
+  const hasForm = Boolean(event.formUrl);
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
@@ -172,102 +170,42 @@ export default async function EventDetailPage({ params }: PageProps) {
         {/* Form Submission */}
         {hasForm && (
           <Section title="Form Submission">
-            {event.formUrl && (
-              <a
-                href={event.formUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium dark:text-blue-400 dark:hover:text-blue-300"
+            <a
+              href={event.formUrl!}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              View submitted form in Planning Center
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
               >
-                View in Planning Center
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M13.5 6H9.75A2.25 2.25 0 007.5 8.25v8.25a2.25 2.25 0 002.25 2.25h8.25A2.25 2.25 0 0120.25 16.5V12.75"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15 3h6m0 0v6m0-6L10 13"
-                  />
-                </svg>
-              </a>
-            )}
-            {formSubmissions.length > 0 && (
-              <div className={`space-y-4 ${event.formUrl ? "mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800" : ""}`}>
-                {formSubmissions.map((submission, index) => {
-                  const responses = parseJsonSafe<
-                    Array<{ label: string; value: string }> | Record<string, string>
-                  >(submission.responses, {});
-                  const responseEntries = Array.isArray(responses)
-                    ? responses.map((response) => [response.label, response.value])
-                    : Object.entries(responses);
-
-                  return (
-                    <div key={`${submission.submissionId}-${index}`} className="space-y-2">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                        Submission {index + 1}
-                      </div>
-                      {(submission.submitterName || submission.submitterEmail || submission.submittedAt) && (
-                        <div className="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-                          {submission.submitterName && <div>{submission.submitterName}</div>}
-                          {submission.submitterEmail && (
-                            <div>
-                              <a
-                                href={`mailto:${submission.submitterEmail}`}
-                                className="text-blue-600 hover:underline dark:text-blue-400"
-                              >
-                                {submission.submitterEmail}
-                              </a>
-                            </div>
-                          )}
-                          {submission.submittedAt && (
-                            <div>{formatDateTime(submission.submittedAt)}</div>
-                          )}
-                        </div>
-                      )}
-                      {responseEntries.length > 0 ? (
-                        <div className="space-y-2">
-                          {responseEntries.map(([key, value]) => (
-                            <div key={`${submission.submissionId}-${key}`}>
-                              <dt className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                                {key}
-                              </dt>
-                              <dd className="text-sm text-zinc-800 dark:text-zinc-200">
-                                {value}
-                              </dd>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                          No form responses found.
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            {Object.keys(formFields).length > 0 && formSubmissions.length === 0 && (
-              <div className={`space-y-2 ${event.formUrl ? "mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800" : ""}`}>
-                {Object.entries(formFields).map(([key, value]) => (
-                  <div key={key}>
-                    <dt className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{key}</dt>
-                    <dd className="text-sm text-zinc-800 dark:text-zinc-200">{value}</dd>
-                  </div>
-                ))}
-              </div>
-            )}
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13.5 6H9.75A2.25 2.25 0 007.5 8.25v8.25a2.25 2.25 0 002.25 2.25h8.25A2.25 2.25 0 0120.25 16.5V12.75"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 3h6m0 0v6m0-6L10 13"
+                />
+              </svg>
+            </a>
           </Section>
         )}
+
+        <EventDetailsSection
+          eventId={event.id}
+          setupNotes={event.setupNotes}
+          estimatedAttendance={event.estimatedAttendance}
+          eventLocationsJson={event.eventLocations}
+          additionalComments={event.additionalComments}
+        />
 
         <Section title="Updates">
           <Updates eventId={event.id} initialNotes={timelineNotes} />

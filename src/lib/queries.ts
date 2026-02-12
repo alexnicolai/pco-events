@@ -44,6 +44,10 @@ export interface EventWithMeta {
   syncedAt: string;
   status: EventStatus;
   coordinatorId: number | null;
+  setupNotes: string | null;
+  estimatedAttendance: string | null;
+  eventLocations: string | null;
+  additionalComments: string | null;
   coordinatorName: string | null;
   coordinatorEmail: string | null;
   formSubmissions?: EventFormSubmission[];
@@ -92,6 +96,10 @@ export async function getEvents(filters: EventFilters = {}): Promise<EventWithMe
       syncedAt: events.syncedAt,
       status: eventMeta.status,
       coordinatorId: eventMeta.coordinatorId,
+      setupNotes: eventMeta.setupNotes,
+      estimatedAttendance: eventMeta.estimatedAttendance,
+      eventLocations: eventMeta.eventLocations,
+      additionalComments: eventMeta.additionalComments,
       coordinatorName: coordinators.name,
       coordinatorEmail: coordinators.email,
     })
@@ -137,6 +145,10 @@ export async function getEventById(id: string): Promise<EventWithMeta | null> {
       syncedAt: events.syncedAt,
       status: eventMeta.status,
       coordinatorId: eventMeta.coordinatorId,
+      setupNotes: eventMeta.setupNotes,
+      estimatedAttendance: eventMeta.estimatedAttendance,
+      eventLocations: eventMeta.eventLocations,
+      additionalComments: eventMeta.additionalComments,
       coordinatorName: coordinators.name,
       coordinatorEmail: coordinators.email,
     })
@@ -246,7 +258,14 @@ export async function getCoordinators(): Promise<Coordinator[]> {
  */
 export async function updateEventMeta(
   eventId: string,
-  updates: { status?: EventStatus; coordinatorId?: number | null }
+  updates: {
+    status?: EventStatus;
+    coordinatorId?: number | null;
+    setupNotes?: string | null;
+    estimatedAttendance?: string | null;
+    eventLocations?: string | null;
+    additionalComments?: string | null;
+  }
 ): Promise<void> {
   const now = new Date().toISOString();
 
@@ -257,11 +276,27 @@ export async function updateEventMeta(
     .limit(1);
 
   if (existing.length > 0) {
-    const set: { updatedAt: string; status?: EventStatus; coordinatorId?: number | null } = {
+    const set: {
+      updatedAt: string;
+      status?: EventStatus;
+      coordinatorId?: number | null;
+      setupNotes?: string | null;
+      estimatedAttendance?: string | null;
+      eventLocations?: string | null;
+      additionalComments?: string | null;
+    } = {
       updatedAt: now,
     };
     if (updates.status !== undefined) set.status = updates.status;
     if (updates.coordinatorId !== undefined) set.coordinatorId = updates.coordinatorId;
+    if (updates.setupNotes !== undefined) set.setupNotes = updates.setupNotes;
+    if (updates.estimatedAttendance !== undefined) {
+      set.estimatedAttendance = updates.estimatedAttendance;
+    }
+    if (updates.eventLocations !== undefined) set.eventLocations = updates.eventLocations;
+    if (updates.additionalComments !== undefined) {
+      set.additionalComments = updates.additionalComments;
+    }
 
     await db.update(eventMeta).set(set).where(eq(eventMeta.eventId, eventId));
   } else {
@@ -269,6 +304,10 @@ export async function updateEventMeta(
       eventId,
       status: updates.status ?? "not_contacted",
       coordinatorId: updates.coordinatorId ?? null,
+      setupNotes: updates.setupNotes ?? null,
+      estimatedAttendance: updates.estimatedAttendance ?? null,
+      eventLocations: updates.eventLocations ?? null,
+      additionalComments: updates.additionalComments ?? null,
       updatedAt: now,
     });
   }
