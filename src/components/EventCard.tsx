@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { EventWithMeta } from "@/lib/queries";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { StatusPill } from "./StatusPill";
 
 interface EventCardProps {
@@ -34,7 +33,7 @@ export function EventCard({ event }: EventCardProps) {
     <Link href={`/events/${event.id}`} className="block">
       <Card className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/90">
         <CardContent className="p-4 sm:p-5">
-          <div className="flex items-start justify-between gap-2">
+          <div className="mb-3 flex items-start justify-between gap-2">
             <h3 className="line-clamp-2 text-[17px] font-semibold leading-tight text-zinc-950 dark:text-zinc-50">
               {event.title}
             </h3>
@@ -51,8 +50,6 @@ export function EventCard({ event }: EventCardProps) {
               <StatusPill status={event.status} />
             </div>
           </div>
-
-          <Separator className="my-3" />
 
           <div className="flex items-center gap-2 text-[13px] text-zinc-600 dark:text-zinc-400">
             <svg
