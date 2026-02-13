@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Updates = dynamic(() => import("@/components/Updates").then((mod) => mod.Updates), {
-  loading: () => <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading updates...</p>,
+  loading: () => <p className="text-sm text-text-secondary">Loading updates...</p>,
 });
 
 interface PageProps {
@@ -41,7 +41,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        <CardTitle className="text-xs uppercase tracking-wide text-text-secondary">
           {title}
         </CardTitle>
       </CardHeader>
@@ -53,10 +53,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1 sm:flex-row sm:gap-3">
-      <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400 sm:w-24 sm:shrink-0">
+      <span className="text-sm font-medium text-text-secondary sm:w-24 sm:shrink-0">
         {label}
       </span>
-      <span className="text-base text-zinc-800 dark:text-zinc-200">{children}</span>
+      <span className="text-base text-text-primary">{children}</span>
     </div>
   );
 }
@@ -78,10 +78,10 @@ export default async function EventDetailPage({ params }: PageProps) {
   const hasForm = Boolean(event.formUrl);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
-      <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 dark:border-zinc-800 dark:bg-zinc-950/95">
+    <div className="min-h-screen bg-bg-primary text-text-primary">
+      <header className="sticky top-0 z-20 border-b border-divider bg-bg-primary">
         <div className="mx-auto flex h-14 max-w-2xl items-center gap-2 px-4">
-          <Link href="/" aria-label="Back to events" className="inline-flex h-10 w-10 items-center justify-center rounded-full text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800">
+          <Link href="/" aria-label="Back to events" className="inline-flex h-10 w-10 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-bg-hover">
               <svg
                 className="h-5 w-5"
                 fill="none"
@@ -96,7 +96,7 @@ export default async function EventDetailPage({ params }: PageProps) {
                 />
               </svg>
           </Link>
-          <h1 className="truncate text-[17px] font-semibold text-zinc-900 dark:text-zinc-100">{event.title}</h1>
+          <h1 className="truncate text-[17px] font-semibold text-text-primary">{event.title}</h1>
         </div>
       </header>
 
@@ -143,14 +143,14 @@ export default async function EventDetailPage({ params }: PageProps) {
             {event.contactName && <Row label="Contact">{event.contactName}</Row>}
             {event.contactEmail && (
               <Row label="Email">
-                <a href={`mailto:${event.contactEmail}`} className="font-medium text-zinc-900 hover:underline dark:text-zinc-100">
+                <a href={`mailto:${event.contactEmail}`} className="font-medium text-text-primary hover:underline">
                   {event.contactEmail}
                 </a>
               </Row>
             )}
             {event.contactPhone && (
               <Row label="Phone">
-                <a href={`tel:${event.contactPhone}`} className="font-medium text-zinc-900 hover:underline dark:text-zinc-100">
+                <a href={`tel:${event.contactPhone}`} className="font-medium text-text-primary hover:underline">
                   {event.contactPhone}
                 </a>
               </Row>
@@ -165,7 +165,7 @@ export default async function EventDetailPage({ params }: PageProps) {
               href={event.formUrl!}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-11 items-center gap-1 text-[15px] font-medium text-zinc-900 hover:underline dark:text-zinc-100"
+              className="inline-flex min-h-11 items-center gap-1 text-[15px] font-medium text-text-primary hover:underline"
             >
               View submitted form in Planning Center
             </a>

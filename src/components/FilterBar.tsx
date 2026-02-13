@@ -104,7 +104,7 @@ export function FilterBar({ eventTypes, coordinators }: FilterBarProps) {
   }, []);
 
   return (
-    <div className="border-b border-zinc-200 bg-white px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="border-b border-divider bg-bg-primary px-4 py-2.5">
       <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
         <Button
           variant="outline"
@@ -118,17 +118,17 @@ export function FilterBar({ eventTypes, coordinators }: FilterBarProps) {
         >
           <span>Filters</span>
           {activeFilterCount > 0 ? (
-            <span className="rounded-full bg-zinc-950 px-2 py-0.5 text-xs text-white dark:bg-zinc-100 dark:text-zinc-950">
+            <span className="rounded-full bg-accent px-2 py-0.5 text-xs text-white">
               {activeFilterCount}
             </span>
           ) : null}
         </Button>
-        {isPending && <span className="text-sm text-zinc-500 dark:text-zinc-400">Loading...</span>}
+        {isPending && <span className="text-sm text-text-secondary">Loading...</span>}
       </div>
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent id="filter-panel">
-          <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+          <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-bg-tertiary" />
           <SheetHeader>
             <SheetTitle>Filter Events</SheetTitle>
             <SheetDescription>Apply filters to narrow your event list.</SheetDescription>

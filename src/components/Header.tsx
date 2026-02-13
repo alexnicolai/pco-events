@@ -41,16 +41,16 @@ export function Header({ lastSyncedAt }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 dark:border-zinc-800 dark:bg-zinc-950/95">
+    <header className="sticky top-0 z-20 border-b border-divider bg-bg-primary">
       <div className="mx-auto flex h-14 max-w-2xl items-center justify-between gap-3 px-4">
-        <h1 className="text-[17px] font-semibold text-zinc-950 dark:text-zinc-50">PCO Events</h1>
+        <h1 className="text-[17px] font-semibold text-text-primary">PCO Events</h1>
         <div className="flex items-center gap-2">
           {lastSyncedAt && (
-            <Badge variant="outline" className="hidden sm:inline-flex">
+            <Badge variant="outline" className="hidden h-full border-0 sm:inline-flex">
               Synced {formatRelativeTime(lastSyncedAt)}
             </Badge>
           )}
-          <Button onClick={handleSync} disabled={syncing} size="default" className="min-w-20">
+          <Button onClick={handleSync} disabled={syncing} size="default" className="min-w-20 px-6">
             {syncing ? "Syncing..." : "Sync"}
           </Button>
         </div>

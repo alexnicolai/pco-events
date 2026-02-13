@@ -12,9 +12,9 @@ export function EmptyState({
   return (
     <Card>
       <CardContent className="flex flex-col items-center justify-center px-4 py-10 text-center sm:py-14">
-        <div className="mb-4 rounded-full bg-zinc-100 p-4 dark:bg-zinc-800" aria-hidden>
+        <div className="mb-4 rounded-full bg-bg-secondary p-4" aria-hidden>
           <svg
-            className="h-8 w-8 text-zinc-400"
+            className="h-8 w-8 text-text-tertiary"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -27,8 +27,8 @@ export function EmptyState({
             />
           </svg>
         </div>
-        <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">{title}</h3>
-        <p className="mt-2 max-w-sm text-base text-zinc-500 dark:text-zinc-400">{message}</p>
+        <h3 className="text-xl font-semibold text-text-primary">{title}</h3>
+        <p className="mt-2 max-w-sm text-base text-text-secondary">{message}</p>
       </CardContent>
     </Card>
   );

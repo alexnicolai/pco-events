@@ -13,17 +13,17 @@ const STATUS_OPTIONS: {
   {
     value: "not_contacted",
     label: "Not Contacted",
-    activeClass: "bg-zinc-200 text-zinc-800 dark:bg-zinc-700 dark:text-zinc-100",
+    activeClass: "bg-bg-secondary text-text-primary",
   },
   {
     value: "contacted",
     label: "Contacted",
-    activeClass: "bg-zinc-800 text-zinc-100 dark:bg-zinc-200 dark:text-zinc-950",
+    activeClass: "bg-bg-tertiary text-text-primary",
   },
   {
     value: "completed",
     label: "Completed",
-    activeClass: "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950",
+    activeClass: "bg-accent text-white",
   },
 ];
 
@@ -67,7 +67,7 @@ export function StatusSelector({ eventId, currentStatus }: StatusSelectorProps) 
             "h-11 rounded-full px-4 text-sm",
             status === option.value
               ? option.activeClass
-              : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              : "bg-bg-secondary text-text-secondary hover:bg-bg-tertiary"
           )}
         >
           {option.label}

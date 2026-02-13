@@ -2,5 +2,5 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export function Separator({ className, ...props }: React.HTMLAttributes<HTMLHRElement>) {
-  return <hr className={cn("border-zinc-200 dark:border-zinc-800", className)} {...props} />;
+  return <hr className={cn("border-divider", className)} {...props} />;
 }

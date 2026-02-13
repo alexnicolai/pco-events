@@ -81,7 +81,7 @@ export default async function Home({ searchParams }: PageProps) {
   const lastSyncedAt = events.length > 0 ? events[0].syncedAt : undefined;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
+    <div className="min-h-screen bg-bg-primary text-text-primary">
       <Suspense fallback={null}>
         <EventListClient
           events={events}

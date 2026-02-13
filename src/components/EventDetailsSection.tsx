@@ -63,8 +63,8 @@ function toNullableText(value: string): string | null {
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="space-y-1">
-      <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">{label}</p>
-      <div className="text-base text-zinc-900 dark:text-zinc-100">{value}</div>
+      <p className="text-sm font-medium text-text-secondary">{label}</p>
+      <div className="text-base text-text-primary">{value}</div>
     </div>
   );
 }
@@ -147,7 +147,7 @@ export function EventDetailsSection({
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between gap-3 pb-3">
-        <CardTitle className="text-sm uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        <CardTitle className="text-sm uppercase tracking-wide text-text-secondary">
           Event Details
         </CardTitle>
         {!isEditing && (
@@ -207,21 +207,21 @@ export function EventDetailsSection({
             </div>
 
             <fieldset className="space-y-2">
-              <legend className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <legend className="text-sm font-medium text-text-secondary">
                 Where will the event be held?
               </legend>
               <div className="space-y-2">
                 {EVENT_LOCATION_OPTIONS.map((option) => (
                   <label
                     key={option.key}
-                    className="flex items-start gap-2 rounded-lg p-1 text-base text-zinc-800 dark:text-zinc-200"
+                    className="flex items-start gap-2 rounded-lg p-1 text-base text-text-primary"
                   >
                     <input
                       type="checkbox"
                       checked={draft.eventLocations.includes(option.key)}
                       onChange={(event) => toggleLocation(option.key, event.target.checked)}
                       disabled={isSaving}
-                      className="mt-1 h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400 dark:border-zinc-600 dark:bg-zinc-900"
+                      className="mt-1 h-4 w-4 rounded border-border text-accent focus:ring-accent"
                     />
                     <span>{option.label}</span>
                   </label>

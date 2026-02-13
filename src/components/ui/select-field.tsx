@@ -14,9 +14,9 @@ export const SelectField = React.forwardRef<HTMLSelectElement, SelectFieldProps>
       <select
         ref={ref}
         className={cn(
-          "h-11 w-full appearance-none rounded-2xl border border-zinc-300 bg-white px-3 pr-10 text-[15px] text-zinc-900",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400",
-          "disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100",
+          "h-11 w-full appearance-none rounded-2xl border border-border bg-bg-primary px-3 pr-10 text-[15px] text-text-primary",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+          "disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         {...props}
@@ -24,7 +24,7 @@ export const SelectField = React.forwardRef<HTMLSelectElement, SelectFieldProps>
         {children}
       </select>
       <svg
-        className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 dark:text-zinc-400"
+        className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"

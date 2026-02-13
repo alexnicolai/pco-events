@@ -31,10 +31,10 @@ function coordinatorBadgeVariant(name: string): "secondary" | "outline" {
 export function EventCard({ event }: EventCardProps) {
   return (
     <Link href={`/events/${event.id}`} className="block">
-      <Card className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/90">
+      <Card className="transition-colors hover:bg-bg-hover">
         <CardContent className="p-4 sm:p-5">
-          <div className="mb-3 flex items-start justify-between gap-2">
-            <h3 className="line-clamp-2 text-[17px] font-semibold leading-tight text-zinc-950 dark:text-zinc-50">
+          <div className="mb-1 flex items-start justify-between gap-2">
+            <h3 className="line-clamp-2 text-[17px] font-semibold leading-tight text-text-primary">
               {event.title}
             </h3>
             <div className="flex shrink-0 items-center gap-2">
@@ -51,7 +51,7 @@ export function EventCard({ event }: EventCardProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-[13px] text-zinc-600 dark:text-zinc-400">
+          <div className="flex items-center gap-2 text-[13px] text-text-secondary">
             <svg
               className="h-4 w-4 shrink-0"
               fill="none"

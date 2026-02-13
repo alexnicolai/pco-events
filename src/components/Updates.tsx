@@ -137,7 +137,7 @@ export function Updates({ eventId, initialNotes }: UpdatesProps) {
           <Button type="submit" disabled={loading}>
             Post update
           </Button>
-          <span className="text-sm text-zinc-500 dark:text-zinc-400">
+          <span className="text-sm text-text-secondary">
             {note.length}/{MAX_TIMELINE_NOTE_LENGTH}
           </span>
         </div>
@@ -148,18 +148,18 @@ export function Updates({ eventId, initialNotes }: UpdatesProps) {
       <div className="space-y-3">
         {notes.length === 0 ? (
           <Card className="border-dashed">
-            <CardContent className="py-4 text-sm text-zinc-500 dark:text-zinc-400">No updates yet.</CardContent>
+            <CardContent className="py-4 text-sm text-text-secondary">No updates yet.</CardContent>
           </Card>
         ) : (
           notes.map((timelineNote) => (
-            <Card key={timelineNote.id} className="bg-white dark:bg-zinc-900">
+            <Card key={timelineNote.id} className="bg-bg-card">
               <CardContent className="p-3 sm:p-4">
                 <div className="mb-2 flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                    <div className="text-sm font-semibold text-text-primary">
                       {timelineNote.authorName}
                     </div>
-                    <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <div className="text-xs text-text-secondary">
                       {formatDateTime(timelineNote.createdAt)}
                     </div>
                   </div>
@@ -174,7 +174,7 @@ export function Updates({ eventId, initialNotes }: UpdatesProps) {
                     Delete
                   </Button>
                 </div>
-                <p className="whitespace-pre-wrap text-base text-zinc-700 dark:text-zinc-300">
+                <p className="whitespace-pre-wrap text-base text-text-secondary">
                   {timelineNote.note}
                 </p>
               </CardContent>
