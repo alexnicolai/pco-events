@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PCO Events",
+  title: "PRC Events",
   description: "Mobile-first event request coordination for Planning Center.",
 };
 
