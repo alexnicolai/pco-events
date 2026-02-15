@@ -57,9 +57,9 @@ function pickMostRecentSubmission(
  * - Creates event_meta for new events (status: not_contacted)
  * - Deletes events no longer in PCO
  *
- * @param daysAhead - Number of days to look ahead (default: 90)
+ * @param daysAhead - Number of days to look ahead (default: 365)
  */
-export async function syncEvents(daysAhead = 90): Promise<SyncResult> {
+export async function syncEvents(daysAhead = 365): Promise<SyncResult> {
   const result: SyncResult = {
     created: 0,
     updated: 0,

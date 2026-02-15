@@ -231,9 +231,9 @@ export interface PcoEventInstancesResponse {
  * Filters for future events within date range
  * Includes related event and event_times
  *
- * @param daysAhead - Number of days to look ahead (default: 90)
+ * @param daysAhead - Number of days to look ahead (default: 365)
  */
-export async function fetchApprovedEvents(daysAhead = 90): Promise<PcoEventInstancesResponse> {
+export async function fetchApprovedEvents(daysAhead = 365): Promise<PcoEventInstancesResponse> {
   const today = new Date();
   const futureDate = new Date();
   futureDate.setDate(today.getDate() + daysAhead);
