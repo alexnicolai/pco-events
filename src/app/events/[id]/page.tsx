@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getEventById, getCoordinators, getEventTimelineNotes } from "@/lib/queries";
 import { EventDetailsSection } from "@/components/EventDetailsSection";
+import { FormattedDate } from "@/components/FormattedDate";
 import { DetailClient } from "./DetailClient";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,20 +14,6 @@ const Updates = dynamic(() => import("@/components/Updates").then((mod) => mod.U
 
 interface PageProps {
   params: Promise<{ id: string }>;
-}
-
-function formatDateTime(isoString: string): string {
-  const date = new Date(isoString);
-  return date.toLocaleString("en-US", {
-    timeZone: "America/New_York",
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
 }
 
 function parseJsonSafe<T>(value: string | null, fallback: T): T {
@@ -120,8 +107,8 @@ export default async function EventDetailPage({ params }: PageProps) {
         </Card>
 
         <Section title="When">
-          <Row label="Start">{formatDateTime(event.startAt)}</Row>
-          {event.endAt && <Row label="End">{formatDateTime(event.endAt)}</Row>}
+          <Row label="Start"><FormattedDate isoString={event.startAt} variant="long" /></Row>
+          {event.endAt && <Row label="End"><FormattedDate isoString={event.endAt} variant="long" /></Row>}
         </Section>
 
         {(event.campus || rooms.length > 0) && (
