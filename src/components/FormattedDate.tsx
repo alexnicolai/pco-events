@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 interface FormattedDateProps {
   isoString: string;
   variant?: "short" | "long";
@@ -33,5 +35,13 @@ function formatDateTime(isoString: string, variant: "short" | "long"): string {
 }
 
 export function FormattedDate({ isoString, variant = "short" }: FormattedDateProps) {
-  return <>{formatDateTime(isoString, variant)}</>;
+  const [formatted, setFormatted] = useState("");
+
+  useEffect(() => {
+    setFormatted(formatDateTime(isoString, variant));
+  }, [isoString, variant]);
+
+  if (!formatted) return null;
+
+  return <>{formatted}</>;
 }
