@@ -3,23 +3,10 @@ import type { EventWithMeta } from "@/lib/queries";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusPill } from "./StatusPill";
+import { FormattedDate } from "./FormattedDate";
 
 interface EventCardProps {
   event: EventWithMeta;
-}
-
-function formatDateTime(isoString: string): string {
-  const date = new Date(isoString);
-
-  return date.toLocaleString("en-US", {
-    timeZone: "America/New_York",
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
 }
 
 function coordinatorBadgeVariant(name: string): "secondary" | "outline" {
@@ -66,7 +53,7 @@ export function EventCard({ event }: EventCardProps) {
                 d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
               />
             </svg>
-            <span>{formatDateTime(event.startAt)}</span>
+            <span><FormattedDate isoString={event.startAt} /></span>
           </div>
         </CardContent>
       </Card>
