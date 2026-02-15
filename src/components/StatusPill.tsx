@@ -1,17 +1,13 @@
 import type { EventStatus } from "@/db/schema";
 import { Badge } from "@/components/ui/badge";
 
-const statusConfig: Record<EventStatus, { label: string; variant: "secondary" | "outline" | "success" }> = {
+const statusConfig: Record<EventStatus, { label: string; variant: "secondary" | "outline" | "success" | "warning" }> = {
   not_contacted: {
     label: "Not Contacted",
-    variant: "secondary",
+    variant: "warning",
   },
   contacted: {
     label: "Contacted",
-    variant: "outline",
-  },
-  completed: {
-    label: "Completed",
     variant: "success",
   },
 };

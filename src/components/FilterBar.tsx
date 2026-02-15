@@ -24,7 +24,6 @@ const STATUS_OPTIONS: { value: EventStatus | ""; label: string }[] = [
   { value: "", label: "All Statuses" },
   { value: "not_contacted", label: "Not Contacted" },
   { value: "contacted", label: "Contacted" },
-  { value: "completed", label: "Completed" },
 ];
 
 type DateRange = "this_month" | "this_year";
