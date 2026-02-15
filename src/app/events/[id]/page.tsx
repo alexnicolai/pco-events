@@ -18,6 +18,7 @@ interface PageProps {
 function formatDateTime(isoString: string): string {
   const date = new Date(isoString);
   return date.toLocaleString("en-US", {
+    timeZone: "America/New_York",
     weekday: "long",
     month: "long",
     day: "numeric",

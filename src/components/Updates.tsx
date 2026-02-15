@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 function formatDateTime(isoString: string): string {
   const date = new Date(isoString);
   return date.toLocaleString("en-US", {
+    timeZone: "America/New_York",
     weekday: "short",
     month: "short",
     day: "numeric",
