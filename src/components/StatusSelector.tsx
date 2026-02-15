@@ -2,29 +2,11 @@
 
 import { useState } from "react";
 import type { EventStatus } from "@/db/schema";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { SelectField } from "@/components/ui/select-field";
 
-const STATUS_OPTIONS: {
-  value: EventStatus;
-  label: string;
-  activeClass: string;
-}[] = [
-  {
-    value: "not_contacted",
-    label: "Not Contacted",
-    activeClass: "bg-bg-secondary text-text-primary",
-  },
-  {
-    value: "contacted",
-    label: "Contacted",
-    activeClass: "bg-bg-tertiary text-text-primary",
-  },
-  {
-    value: "completed",
-    label: "Completed",
-    activeClass: "bg-accent text-white",
-  },
+const STATUS_OPTIONS: { value: EventStatus; label: string }[] = [
+  { value: "not_contacted", label: "Not Contacted" },
+  { value: "contacted", label: "Contacted" },
 ];
 
 interface StatusSelectorProps {
@@ -36,7 +18,7 @@ export function StatusSelector({ eventId, currentStatus }: StatusSelectorProps) 
   const [status, setStatus] = useState<EventStatus>(currentStatus);
   const [loading, setLoading] = useState(false);
 
-  async function handleSelect(value: EventStatus) {
+  async function handleChange(value: EventStatus) {
     if (value === status || loading) return;
     const prev = status;
     setStatus(value);
@@ -56,23 +38,16 @@ export function StatusSelector({ eventId, currentStatus }: StatusSelectorProps) 
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <SelectField
+      value={status}
+      onChange={(e) => handleChange(e.target.value as EventStatus)}
+      disabled={loading}
+    >
       {STATUS_OPTIONS.map((option) => (
-        <Button
-          key={option.value}
-          onClick={() => handleSelect(option.value)}
-          disabled={loading}
-          variant="secondary"
-          className={cn(
-            "h-11 rounded-full px-4 text-sm",
-            status === option.value
-              ? option.activeClass
-              : "bg-bg-secondary text-text-secondary hover:bg-bg-tertiary"
-          )}
-        >
+        <option key={option.value} value={option.value}>
           {option.label}
-        </Button>
+        </option>
       ))}
-    </div>
+    </SelectField>
   );
 }
