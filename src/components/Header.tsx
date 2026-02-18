@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
   lastSyncedAt?: string;
+  eventCount?: number;
 }
 
-export function Header({ lastSyncedAt }: HeaderProps) {
+export function Header({ lastSyncedAt, eventCount }: HeaderProps) {
   const router = useRouter();
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -43,7 +44,12 @@ export function Header({ lastSyncedAt }: HeaderProps) {
   return (
     <header className="sticky top-0 z-20 border-b-[0.5px] border-divider bg-bg-primary">
       <div className="mx-auto flex h-14 max-w-2xl items-center justify-between gap-3 px-4">
-        <h1 className="text-[17px] font-semibold text-text-primary">PRC Events</h1>
+        <div>
+            <h1 className="text-[17px] font-semibold text-text-primary">PRC Events</h1>
+            {eventCount !== undefined && (
+              <p className="text-[11px] font-medium text-text-secondary">{eventCount} events</p>
+            )}
+          </div>
         <div className="flex items-center gap-2">
           {lastSyncedAt && (
             <Badge variant="outline" className="hidden h-full border-0 sm:inline-flex">

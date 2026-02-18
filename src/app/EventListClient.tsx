@@ -15,7 +15,7 @@ interface EventListClientProps {
 export function EventListClient({ events, filterOptions, lastSyncedAt }: EventListClientProps) {
   return (
     <>
-      <Header lastSyncedAt={lastSyncedAt} />
+      <Header lastSyncedAt={lastSyncedAt} eventCount={events.length} />
       <FilterBar eventTypes={filterOptions.eventTypes} coordinators={filterOptions.coordinators} />
       <main className="mx-auto max-w-2xl px-4 py-3 sm:py-5">
         {events.length === 0 ? (
