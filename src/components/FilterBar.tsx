@@ -102,12 +102,19 @@ export function FilterBar({ eventTypes, coordinators }: FilterBarProps) {
     });
   }, []);
 
+  const clearFilters = useCallback(() => {
+    startTransition(() => {
+      router.push("/");
+      setOpen(false);
+    });
+  }, [router]);
+
   return (
     <div className="border-b-[0.5px] border-divider bg-bg-primary px-4 py-2.5">
-      <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
+      <div className="mx-auto flex max-w-2xl items-center gap-3">
         <Button
           variant="outline"
-          className="w-full justify-between"
+          className="flex-1 justify-between"
           onClick={() => {
             syncDraftWithCurrent();
             setOpen(true);
@@ -122,7 +129,11 @@ export function FilterBar({ eventTypes, coordinators }: FilterBarProps) {
             </span>
           ) : null}
         </Button>
-        {isPending && <span className="text-sm text-text-secondary">Loading...</span>}
+        {activeFilterCount > 0 && (
+          <Button variant="ghost" size="sm" onClick={clearFilters} disabled={isPending}>
+            Clear
+          </Button>
+        )}
       </div>
 
       <Sheet open={open} onOpenChange={setOpen}>
@@ -204,7 +215,7 @@ export function FilterBar({ eventTypes, coordinators }: FilterBarProps) {
           </div>
 
           <SheetFooter>
-            <Button variant="outline" className="flex-1" onClick={clearDraft}>
+            <Button variant="outline" className="flex-1" onClick={clearFilters} disabled={isPending}>
               Clear
             </Button>
             <Button className="flex-1" onClick={applyDraft} disabled={isPending}>
