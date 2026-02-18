@@ -25,17 +25,19 @@ export function EventCard({ event }: EventCardProps) {
             <h3 className="line-clamp-2 text-[17px] font-semibold leading-tight text-text-primary">
               {event.title}
             </h3>
-            <StatusPill status={event.status} className="text-[14px]" style={{ padding: "8px 12px" }} />
+            <StatusPill status={event.status} />
           </div>
 
-          <div className="flex items-center gap-2 text-[14px] text-text-secondary">
-            <CalendarIcon className="h-4 w-4 shrink-0" />
-            <span className="font-medium"><FormattedDate isoString={event.startAt} /></span>
+          <div className="flex items-center justify-between gap-2 text-[14px] text-text-secondary">
+            <div className="flex items-center gap-2">
+              <CalendarIcon className="h-4 w-4 shrink-0" />
+              <span className="font-medium"><FormattedDate isoString={event.startAt} /></span>
+            </div>
             {event.coordinatorName && (
               <Badge
                 title={event.coordinatorName}
                 variant={coordinatorBadgeVariant(event.coordinatorName)}
-                className="max-w-28 truncate text-[14px]"
+                className="text-[14px] mr-1"
                 style={{ padding: "6px 12px" }}
               >
                 {event.coordinatorName}

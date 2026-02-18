@@ -1,23 +1,15 @@
-import type { HTMLAttributes } from "react";
+import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import type { EventStatus } from "@/db/schema";
-import { Badge } from "@/components/ui/badge";
 
-const statusConfig: Record<EventStatus, { label: string; variant: "secondary" | "outline" | "success" | "warning" }> = {
-  not_contacted: {
-    label: "Not Contacted",
-    variant: "warning",
-  },
-  contacted: {
-    label: "Contacted",
-    variant: "success",
-  },
-};
-
-type StatusPillProps = HTMLAttributes<HTMLSpanElement> & {
+interface StatusPillProps {
   status: EventStatus;
-};
+  className?: string;
+}
 
-export function StatusPill({ status, ...props }: StatusPillProps) {
-  const config = statusConfig[status];
-  return <Badge variant={config.variant} {...props}>{config.label}</Badge>;
+export function StatusPill({ status, className }: StatusPillProps) {
+  if (status === "contacted") {
+    return <CheckCircleIcon className={`h-6 w-6 text-[#31a24c] shrink-0 ${className ?? ""}`} />;
+  }
+  return <QuestionMarkCircleIcon className={`h-6 w-6 text-[#f0932b] shrink-0 ${className ?? ""}`} />;
 }
