@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { getEventById, getCoordinators, getEventTimelineNotes } from "@/lib/queries";
 import { EventDetailsSection } from "@/components/EventDetailsSection";
 import { FormattedDate } from "@/components/FormattedDate";
@@ -69,19 +70,7 @@ export default async function EventDetailPage({ params }: PageProps) {
       <header className="sticky top-0 z-20 border-b-[0.5px] border-divider bg-bg-primary">
         <div className="mx-auto flex h-14 max-w-2xl items-center gap-2 px-4">
           <Link href="/" aria-label="Back to events" className="inline-flex h-10 w-10 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-bg-hover">
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-                />
-              </svg>
+              <ArrowLeftIcon className="h-5 w-5" />
           </Link>
           <h1 className="truncate text-[17px] font-semibold text-text-primary">{event.title}</h1>
         </div>

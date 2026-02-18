@@ -1,3 +1,4 @@
+import type { HTMLAttributes } from "react";
 import type { EventStatus } from "@/db/schema";
 import { Badge } from "@/components/ui/badge";
 
@@ -12,11 +13,11 @@ const statusConfig: Record<EventStatus, { label: string; variant: "secondary" | 
   },
 };
 
-interface StatusPillProps {
+type StatusPillProps = HTMLAttributes<HTMLSpanElement> & {
   status: EventStatus;
-}
+};
 
-export function StatusPill({ status }: StatusPillProps) {
+export function StatusPill({ status, ...props }: StatusPillProps) {
   const config = statusConfig[status];
-  return <Badge variant={config.variant}>{config.label}</Badge>;
+  return <Badge variant={config.variant} {...props}>{config.label}</Badge>;
 }
