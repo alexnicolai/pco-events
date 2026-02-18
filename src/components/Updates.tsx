@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { EventTimelineNote } from "@/db/schema";
 import {
   MAX_TIMELINE_AUTHOR_LENGTH,
@@ -8,7 +8,7 @@ import {
 } from "@/lib/timeline-notes";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,6 +34,28 @@ interface UpdatesProps {
 
 export function Updates({ eventId, initialNotes }: UpdatesProps) {
   const [notes, setNotes] = useState<EventTimelineNote[]>(initialNotes);
+
+  useEffect(() => {
+    setNotes(initialNotes);
+  }, [initialNotes]);
+
+  const [showSystemDeletes, setShowSystemDeletes] = useState(false);
+  const titleClickCount = useRef(0);
+  const titleClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleTitleClick() {
+    if (titleClickTimer.current) clearTimeout(titleClickTimer.current);
+    titleClickCount.current += 1;
+    if (titleClickCount.current >= 3) {
+      setShowSystemDeletes((prev) => !prev);
+      titleClickCount.current = 0;
+    } else {
+      titleClickTimer.current = setTimeout(() => {
+        titleClickCount.current = 0;
+      }, 1000);
+    }
+  }
+
   const [authorName, setAuthorName] = useState("");
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
@@ -106,83 +128,99 @@ export function Updates({ eventId, initialNotes }: UpdatesProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="timeline-author">Your Name</Label>
-          <Input
-            id="timeline-author"
-            type="text"
-            value={authorName}
-            onChange={(e) => setAuthorName(e.target.value)}
-            maxLength={MAX_TIMELINE_AUTHOR_LENGTH}
-            required
-            placeholder="Your name"
-          />
-        </div>
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle
+          className="cursor-default select-none text-xs uppercase tracking-wide text-[#050505]"
+          onClick={handleTitleClick}
+        >
+          Updates
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="timeline-author">Your Name</Label>
+            <Input
+              id="timeline-author"
+              type="text"
+              value={authorName}
+              onChange={(e) => setAuthorName(e.target.value)}
+              maxLength={MAX_TIMELINE_AUTHOR_LENGTH}
+              required
+              placeholder="Your name"
+            />
+          </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="timeline-note">Update</Label>
-          <Textarea
-            id="timeline-note"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            maxLength={MAX_TIMELINE_NOTE_LENGTH}
-            required
-            rows={3}
-            placeholder="Add an update"
-          />
-        </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="timeline-note">Update</Label>
+            <Textarea
+              id="timeline-note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              maxLength={MAX_TIMELINE_NOTE_LENGTH}
+              required
+              rows={3}
+              placeholder="Add an update"
+            />
+          </div>
 
-        <div className="flex items-center justify-between gap-3">
-          <Button type="submit" disabled={loading}>
-            Post update
-          </Button>
-          <span className="text-sm text-text-secondary">
-            {note.length}/{MAX_TIMELINE_NOTE_LENGTH}
-          </span>
-        </div>
-      </form>
+          <div className="flex items-center justify-between gap-3">
+            <Button type="submit" disabled={loading}>
+              Post update
+            </Button>
+            <span className="text-sm text-text-secondary">
+              {note.length}/{MAX_TIMELINE_NOTE_LENGTH}
+            </span>
+          </div>
+        </form>
 
-      {error && <Alert variant="destructive">{error}</Alert>}
+        {error && <Alert variant="destructive">{error}</Alert>}
 
-      <div className="space-y-3">
-        {notes.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="py-4 text-sm text-text-secondary">No updates yet.</CardContent>
-          </Card>
-        ) : (
-          notes.map((timelineNote) => (
-            <Card key={timelineNote.id} className="bg-bg-card">
-              <CardContent className="p-3 sm:p-4">
-                <div className="mb-2 flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-text-primary">
-                      {timelineNote.authorName}
-                    </div>
-                    <div className="text-xs text-text-secondary">
-                      {formatDateTime(timelineNote.createdAt)}
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    onClick={() => handleDelete(timelineNote.id)}
-                    disabled={loading}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
-                  >
-                    Delete
-                  </Button>
-                </div>
-                <p className="whitespace-pre-wrap text-base text-text-secondary">
-                  {timelineNote.note}
-                </p>
-              </CardContent>
+        <div className="space-y-3">
+          {notes.length === 0 ? (
+            <Card className="border-dashed">
+              <CardContent className="py-4 text-sm text-text-secondary">No updates yet.</CardContent>
             </Card>
-          ))
-        )}
-      </div>
-    </div>
+          ) : (
+            notes.map((timelineNote) => {
+              const isSystem = timelineNote.authorName === "System";
+              const showDelete = !isSystem || showSystemDeletes;
+              return (
+                <Card key={timelineNote.id} className="bg-bg-card">
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="mb-2 flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold text-text-primary">
+                          {timelineNote.authorName}
+                        </div>
+                        <div className="text-xs text-text-secondary">
+                          {formatDateTime(timelineNote.createdAt)}
+                        </div>
+                      </div>
+                      {showDelete && (
+                        <Button
+                          type="button"
+                          onClick={() => handleDelete(timelineNote.id)}
+                          disabled={loading}
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
+                        >
+                          Delete
+                        </Button>
+                      )}
+                    </div>
+                    <p className="whitespace-pre-wrap text-base text-text-secondary">
+                      {timelineNote.note}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

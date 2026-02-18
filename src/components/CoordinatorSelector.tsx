@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { Coordinator } from "@/db/schema";
 import { SelectField } from "@/components/ui/select-field";
 
@@ -15,6 +16,7 @@ export function CoordinatorSelector({
   currentCoordinatorId,
   coordinators,
 }: CoordinatorSelectorProps) {
+  const router = useRouter();
   const [coordinatorId, setCoordinatorId] = useState<number | null>(currentCoordinatorId);
 
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -27,7 +29,11 @@ export function CoordinatorSelector({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ coordinatorId: value }),
       });
-      if (!res.ok) setCoordinatorId(prev);
+      if (!res.ok) {
+        setCoordinatorId(prev);
+      } else {
+        router.refresh();
+      }
     } catch {
       setCoordinatorId(prev);
     }

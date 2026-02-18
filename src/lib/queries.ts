@@ -7,6 +7,7 @@ import {
   eventTimelineNotes,
   type EventStatus,
   type Coordinator,
+  type EventMeta,
   type EventFormSubmission,
   type EventTimelineNote,
 } from "@/db";
@@ -251,6 +252,22 @@ export async function getCoordinators(): Promise<Coordinator[]> {
   }
 
   return await db.select().from(coordinators).orderBy(coordinators.name);
+}
+
+/**
+ * Fetch event metadata row for a given event ID
+ */
+export async function getEventMeta(eventId: string): Promise<EventMeta | null> {
+  const [row] = await db.select().from(eventMeta).where(eq(eventMeta.eventId, eventId)).limit(1);
+  return row ?? null;
+}
+
+/**
+ * Fetch a single coordinator by ID
+ */
+export async function getCoordinatorById(id: number): Promise<Coordinator | null> {
+  const [row] = await db.select().from(coordinators).where(eq(coordinators.id, id)).limit(1);
+  return row ?? null;
 }
 
 /**

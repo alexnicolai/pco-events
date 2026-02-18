@@ -155,9 +155,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           additionalComments={event.additionalComments}
         />
 
-        <Section title="Updates">
-          <Updates eventId={event.id} initialNotes={timelineNotes} />
-        </Section>
+        <Updates eventId={event.id} initialNotes={timelineNotes} />
       </main>
     </div>
   );

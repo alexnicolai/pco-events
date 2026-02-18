@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { EventStatus } from "@/db/schema";
 import { SelectField } from "@/components/ui/select-field";
 
@@ -15,6 +16,7 @@ interface StatusSelectorProps {
 }
 
 export function StatusSelector({ eventId, currentStatus }: StatusSelectorProps) {
+  const router = useRouter();
   const [status, setStatus] = useState<EventStatus>(currentStatus);
   const [loading, setLoading] = useState(false);
 
@@ -29,7 +31,11 @@ export function StatusSelector({ eventId, currentStatus }: StatusSelectorProps) 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: value }),
       });
-      if (!res.ok) setStatus(prev);
+      if (!res.ok) {
+        setStatus(prev);
+      } else {
+        router.refresh();
+      }
     } catch {
       setStatus(prev);
     } finally {

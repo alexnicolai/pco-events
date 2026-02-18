@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { EVENT_LOCATION_OPTIONS, type EventLocation } from "@/db/schema";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,7 @@ export function EventDetailsSection({
   eventLocationsJson,
   additionalComments,
 }: EventDetailsSectionProps) {
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -123,6 +125,7 @@ export function EventDetailsSection({
       }
 
       setSaved(draft);
+      router.refresh();
       setIsEditing(false);
     } catch {
       setError("Could not save changes. Please try again.");
