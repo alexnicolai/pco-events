@@ -5,7 +5,6 @@ import { getEventById, getCoordinators, getEventTimelineNotes } from "@/lib/quer
 import { EventDetailsSection } from "@/components/EventDetailsSection";
 import { FormattedDate } from "@/components/FormattedDate";
 import { DetailClient } from "./DetailClient";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Updates = dynamic(() => import("@/components/Updates").then((mod) => mod.Updates), {
@@ -29,7 +28,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-xs uppercase tracking-wide text-text-secondary">
+        <CardTitle className="text-xs uppercase tracking-wide text-[#050505]">
           {title}
         </CardTitle>
       </CardHeader>
@@ -67,7 +66,7 @@ export default async function EventDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary">
-      <header className="sticky top-0 z-20 border-b border-divider bg-bg-primary">
+      <header className="sticky top-0 z-20 border-b-[0.5px] border-divider bg-bg-primary">
         <div className="mx-auto flex h-14 max-w-2xl items-center gap-2 px-4">
           <Link href="/" aria-label="Back to events" className="inline-flex h-10 w-10 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-bg-hover">
               <svg
@@ -93,7 +92,6 @@ export default async function EventDetailPage({ params }: PageProps) {
           <CardHeader className="pb-3">
             <div className="flex flex-wrap items-start gap-2">
               <CardTitle className="text-[18px] leading-tight">{event.title}</CardTitle>
-              {event.eventType && <Badge variant="default">{event.eventType}</Badge>}
             </div>
           </CardHeader>
           <CardContent>

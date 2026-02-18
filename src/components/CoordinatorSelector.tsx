@@ -35,9 +35,9 @@ export function CoordinatorSelector({
 
   return (
     <SelectField
+      label="Coordinator assigned"
       value={coordinatorId ?? ""}
       onChange={handleChange}
-      className="min-w-48"
       aria-label="Coordinator"
     >
       <option value="">Unassigned</option>

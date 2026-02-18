@@ -147,11 +147,11 @@ export function EventDetailsSection({
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between gap-3 pb-3">
-        <CardTitle className="text-sm uppercase tracking-wide text-text-secondary">
+        <CardTitle className="text-sm uppercase tracking-wide text-[#050505]">
           Event Details
         </CardTitle>
         {!isEditing && (
-          <Button type="button" variant="outline" size="sm" onClick={handleEdit}>
+          <Button type="button" variant="outline" size="sm" className="w-[76px]" onClick={handleEdit}>
             Edit
           </Button>
         )}

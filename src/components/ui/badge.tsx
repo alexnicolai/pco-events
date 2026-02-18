@@ -1,15 +1,18 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-type BadgeVariant = "default" | "secondary" | "success" | "warning" | "danger" | "outline";
+type BadgeVariant = "default" | "secondary" | "success" | "warning" | "danger" | "outline" | "pink" | "purple" | "blue";
 
 const variants: Record<BadgeVariant, string> = {
   default: "bg-accent text-white",
   secondary: "bg-bg-secondary text-text-primary",
-  success: "bg-positive text-white",
-  warning: "bg-warning text-text-inverse",
+  success: "bg-[#dbfae3] text-[#31a24c]",
+  warning: "bg-[#ffead3] text-[#f0932b]",
   danger: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200",
   outline: "border border-border text-text-secondary",
+  pink: "bg-[#fdf2f8] text-[#db2777]",
+  purple: "bg-[#f3e8ff] text-[#9333ea]",
+  blue: "bg-[#d8e9ff] text-[#1877f2]",
 };
 
 export function Badge({

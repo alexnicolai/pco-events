@@ -41,7 +41,7 @@ export function Header({ lastSyncedAt }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-divider bg-bg-primary">
+    <header className="sticky top-0 z-20 border-b-[0.5px] border-divider bg-bg-primary">
       <div className="mx-auto flex h-14 max-w-2xl items-center justify-between gap-3 px-4">
         <h1 className="text-[17px] font-semibold text-text-primary">PRC Events</h1>
         <div className="flex items-center gap-2">
@@ -50,7 +50,7 @@ export function Header({ lastSyncedAt }: HeaderProps) {
               Synced {formatRelativeTime(lastSyncedAt)}
             </Badge>
           )}
-          <Button onClick={handleSync} disabled={syncing} size="default" className="min-w-20 px-6">
+          <Button onClick={handleSync} disabled={syncing} size="default" className="w-[102px]">
             {syncing ? "Syncing..." : "Sync"}
           </Button>
         </div>

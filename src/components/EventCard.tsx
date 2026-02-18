@@ -9,11 +9,10 @@ interface EventCardProps {
   event: EventWithMeta;
 }
 
-function coordinatorBadgeVariant(name: string): "secondary" | "outline" {
-  if (name === "Bianca Nicolai" || name === "Estera Groza") {
-    return "secondary";
-  }
-  return "outline";
+function coordinatorBadgeVariant(name: string): "pink" | "purple" | "secondary" {
+  if (name.includes("Estera")) return "pink";
+  if (name.includes("Bianca")) return "purple";
+  return "secondary";
 }
 
 export function EventCard({ event }: EventCardProps) {
@@ -39,7 +38,7 @@ export function EventCard({ event }: EventCardProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-[13px] text-text-secondary">
+          <div className="flex items-center gap-2 text-[14px] text-text-secondary">
             <svg
               className="h-4 w-4 shrink-0"
               fill="none"

@@ -39,6 +39,7 @@ export function StatusSelector({ eventId, currentStatus }: StatusSelectorProps) 
 
   return (
     <SelectField
+      label="Status"
       value={status}
       onChange={(e) => handleChange(e.target.value as EventStatus)}
       disabled={loading}

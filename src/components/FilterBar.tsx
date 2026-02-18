@@ -103,11 +103,11 @@ export function FilterBar({ eventTypes, coordinators }: FilterBarProps) {
   }, []);
 
   return (
-    <div className="border-b border-divider bg-bg-primary px-4 py-2.5">
+    <div className="border-b-[0.5px] border-divider bg-bg-primary px-4 py-2.5">
       <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
         <Button
           variant="outline"
-          className="w-full justify-between sm:w-auto"
+          className="w-full justify-between"
           onClick={() => {
             syncDraftWithCurrent();
             setOpen(true);
