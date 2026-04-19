@@ -16,6 +16,13 @@ function coordinatorBadgeVariant(name: string): "pink" | "purple" | "secondary" 
   return "secondary";
 }
 
+function coordinatorBadgeClassName(name: string): string {
+  if (name.includes("Ministry")) {
+    return "text-[14px] mr-1 bg-bg-tertiary text-text-secondary";
+  }
+  return "text-[14px] mr-1";
+}
+
 export function EventCard({ event }: EventCardProps) {
   return (
     <Link href={`/events/${event.id}`} className="block">
@@ -37,7 +44,7 @@ export function EventCard({ event }: EventCardProps) {
               <Badge
                 title={event.coordinatorName}
                 variant={coordinatorBadgeVariant(event.coordinatorName)}
-                className="text-[14px] mr-1"
+                className={coordinatorBadgeClassName(event.coordinatorName)}
                 style={{ padding: "6px 12px" }}
               >
                 {event.coordinatorName}
