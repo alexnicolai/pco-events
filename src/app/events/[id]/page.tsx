@@ -62,7 +62,7 @@ export default async function EventDetailPage({ params }: PageProps) {
   }
 
   const rooms: string[] = parseJsonSafe(event.rooms, []);
-  const hasContact = event.contactName || event.contactEmail || event.contactPhone || event.owner;
+  const hasContact = event.contactName || event.contactEmail || event.contactPhone;
   const hasForm = Boolean(event.formUrl);
 
   return (
@@ -125,12 +125,11 @@ export default async function EventDetailPage({ params }: PageProps) {
             )}
             {event.contactPhone && (
               <Row label="Phone">
-                <a href={`tel:${event.contactPhone}`} className="font-medium text-text-primary hover:underline">
+                <a href={`tel:${event.contactPhone}`} className="font-medium text-blue-600 underline">
                   {event.contactPhone}
                 </a>
               </Row>
             )}
-            {event.owner && <Row label="Owner">{event.owner}</Row>}
           </Section>
         )}
 

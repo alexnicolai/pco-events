@@ -16,6 +16,7 @@ import { eq, and, sql, desc } from "drizzle-orm";
 const DEFAULT_COORDINATORS: Array<{ name: string; email: string | null }> = [
   { name: "Bianca Nicolai", email: null },
   { name: "Estera Groza", email: null },
+  { name: "Ministry", email: null },
 ];
 
 export interface EventFilters {
