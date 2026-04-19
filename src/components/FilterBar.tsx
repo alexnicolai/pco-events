@@ -122,7 +122,7 @@ export function FilterBar({ eventTypes, coordinators }: FilterBarProps) {
           aria-controls="filter-panel"
           aria-expanded={open}
         >
-          <span>Filters</span>
+          <span>Filter events by&hellip;</span>
           {activeFilterCount > 0 ? (
             <span className="rounded-full bg-accent px-2 py-0.5 text-xs text-white">
               {activeFilterCount}
