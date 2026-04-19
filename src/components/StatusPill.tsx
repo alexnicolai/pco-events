@@ -1,4 +1,4 @@
-import { CheckIcon } from "@heroicons/react/24/solid";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import type { EventStatus } from "@/db/schema";
 
 interface StatusPillProps {
@@ -8,7 +8,7 @@ interface StatusPillProps {
 
 export function StatusPill({ status, className }: StatusPillProps) {
   if (status === "contacted") {
-    return <CheckIcon className={`h-6 w-6 text-[#8a8d91] shrink-0 ${className ?? ""}`} />;
+    return <CheckCircleIcon className={`h-6 w-6 text-[#8a8d91] shrink-0 ${className ?? ""}`} />;
   }
   return (
     <span
