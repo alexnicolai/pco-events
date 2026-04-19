@@ -18,9 +18,9 @@ function coordinatorBadgeVariant(name: string): "pink" | "purple" | "secondary" 
 
 function coordinatorBadgeClassName(name: string): string {
   if (name.includes("Ministry")) {
-    return "text-[14px] mr-1 bg-bg-tertiary text-text-secondary";
+    return "text-[14px] bg-bg-tertiary text-text-secondary";
   }
-  return "text-[14px] mr-1";
+  return "text-[14px]";
 }
 
 export function EventCard({ event }: EventCardProps) {
