@@ -23,9 +23,16 @@ function coordinatorBadgeClassName(name: string): string {
 }
 
 export function EventCard({ event }: EventCardProps) {
+  const notContacted = event.status === "not_contacted";
   return (
     <Link href={`/events/${event.id}`} className="block">
-      <Card className="transition-colors hover:bg-bg-hover">
+      <Card
+        className={
+          notContacted
+            ? "border border-orange-500 bg-orange-50 transition-colors hover:bg-orange-100"
+            : "transition-colors hover:bg-bg-hover"
+        }
+      >
         <CardContent className="p-4 sm:p-5">
           <div className="mb-2 flex items-start justify-between gap-2">
             <h3 className="line-clamp-2 text-[17px] font-semibold leading-tight text-text-primary">
@@ -43,16 +50,9 @@ export function EventCard({ event }: EventCardProps) {
             )}
           </div>
 
-          <div className="flex items-center justify-between gap-2 text-[14px] text-text-secondary">
-            <div className="flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4 shrink-0" />
-              <span className="font-medium"><FormattedDate isoString={event.startAt} /></span>
-            </div>
-            {event.status === "not_contacted" && (
-              <Badge variant="yellow" className="text-[14px]" style={{ padding: "6px 12px" }}>
-                Not Contacted
-              </Badge>
-            )}
+          <div className="flex items-center gap-2 text-[14px] text-text-secondary">
+            <CalendarIcon className="h-4 w-4 shrink-0" />
+            <span className="font-medium"><FormattedDate isoString={event.startAt} /></span>
           </div>
         </CardContent>
       </Card>
