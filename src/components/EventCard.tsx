@@ -3,7 +3,6 @@ import { CalendarIcon } from "@heroicons/react/24/outline";
 import type { EventWithMeta } from "@/lib/queries";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { StatusPill } from "./StatusPill";
 import { FormattedDate } from "./FormattedDate";
 
 interface EventCardProps {
@@ -32,24 +31,26 @@ export function EventCard({ event }: EventCardProps) {
             <h3 className="line-clamp-2 text-[17px] font-semibold leading-tight text-text-primary">
               {event.title}
             </h3>
-            <StatusPill status={event.status} />
+            {event.status === "not_contacted" && (
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                {event.coordinatorName && (
+                  <Badge
+                    title={event.coordinatorName}
+                    variant={coordinatorBadgeVariant(event.coordinatorName)}
+                    className={coordinatorBadgeClassName(event.coordinatorName)}
+                    style={{ padding: "6px 12px" }}
+                  >
+                    {event.coordinatorName}
+                  </Badge>
+                )}
+                <Badge className="bg-yellow-100 text-yellow-800">Not Contacted</Badge>
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center justify-between gap-2 text-[14px] text-text-secondary">
-            <div className="flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4 shrink-0" />
-              <span className="font-medium"><FormattedDate isoString={event.startAt} /></span>
-            </div>
-            {event.coordinatorName && (
-              <Badge
-                title={event.coordinatorName}
-                variant={coordinatorBadgeVariant(event.coordinatorName)}
-                className={coordinatorBadgeClassName(event.coordinatorName)}
-                style={{ padding: "6px 12px" }}
-              >
-                {event.coordinatorName}
-              </Badge>
-            )}
+          <div className="flex items-center gap-2 text-[14px] text-text-secondary">
+            <CalendarIcon className="h-4 w-4 shrink-0" />
+            <span className="font-medium"><FormattedDate isoString={event.startAt} /></span>
           </div>
         </CardContent>
       </Card>
