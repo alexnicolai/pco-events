@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
     console.log("[Cron] Starting daily sync...");
     const startTime = Date.now();
 
-    const result = await syncEvents();
+    // Daily cron does a full sync so deletions and parent-event changes are caught.
+    const result = await syncEvents({ mode: "full" });
 
     const duration = Date.now() - startTime;
     console.log(

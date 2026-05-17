@@ -13,9 +13,21 @@ import {
 } from "./pco";
 import type { PcoEventRequestSubmission } from "./pco";
 import { transformPcoEventInstance } from "./transform";
+import { mapWithConcurrency } from "./utils";
 import type { NewEvent, NewEventMeta } from "@/db/schema";
 
 const EXCLUDED_EVENT_TYPES = new Set(["Practice", "Service"]);
+
+// Overlap the incremental window by this much to absorb clock skew between
+// this server and PCO. Re-fetched events upsert idempotently, so overlap is safe.
+const INCREMENTAL_SAFETY_BUFFER_MS = 5 * 60 * 1000;
+
+export type SyncMode = "full" | "incremental";
+
+export interface SyncOptions {
+  daysAhead?: number;
+  mode?: SyncMode;
+}
 
 export interface SyncResult {
   created: number;
@@ -23,6 +35,7 @@ export interface SyncResult {
   deleted: number;
   total: number;
   errors: string[];
+  mode: SyncMode;
 }
 
 function pickMostRecentSubmission(
@@ -49,36 +62,74 @@ function pickMostRecentSubmission(
 }
 
 /**
- * Sync approved events from PCO to local database
- *
- * - Fetches all approved event instances within date range
- * - Transforms to local model
- * - Upserts to events table
- * - Creates event_meta for new events (status: not_contacted)
- * - Deletes events no longer in PCO
- *
- * @param daysAhead - Number of days to look ahead (default: 365)
+ * Cursor for incremental sync: the most recent `syncedAt` in the events table,
+ * less a safety buffer. Returns null when there is nothing synced yet.
  */
-export async function syncEvents(daysAhead = 365): Promise<SyncResult> {
+async function getIncrementalCursor(): Promise<string | null> {
+  const rows = await db
+    .select({ syncedAt: events.syncedAt })
+    .from(events)
+    .orderBy(sql`${events.syncedAt} DESC`)
+    .limit(1);
+
+  const last = rows[0]?.syncedAt;
+  if (!last) return null;
+
+  const parsed = Date.parse(last);
+  if (Number.isNaN(parsed)) return null;
+
+  return new Date(parsed - INCREMENTAL_SAFETY_BUFFER_MS).toISOString();
+}
+
+/**
+ * Sync approved events from PCO to local database.
+ *
+ * - Fetches approved event instances within the date range
+ * - In "incremental" mode, only instances updated since the last sync are
+ *   fetched, and stale events are NOT deleted (the result is a delta)
+ * - In "full" mode, the result is the complete set, so events no longer in
+ *   PCO are deleted
+ * - Per-instance room/tag lookups and database upserts run concurrently;
+ *   the PCO client enforces the API rate limit
+ *
+ * @param options.daysAhead - Days to look ahead (default: 365)
+ * @param options.mode - "full" (default) or "incremental"
+ */
+export async function syncEvents(options: SyncOptions = {}): Promise<SyncResult> {
+  const { daysAhead = 365 } = options;
+  let mode: SyncMode = options.mode ?? "full";
+
+  let updatedSince: string | undefined;
+  if (mode === "incremental") {
+    const cursor = await getIncrementalCursor();
+    if (cursor) {
+      updatedSince = cursor;
+    } else {
+      // Nothing synced yet — a delta is meaningless, do a full sync.
+      mode = "full";
+    }
+  }
+
   const result: SyncResult = {
     created: 0,
     updated: 0,
     deleted: 0,
     total: 0,
     errors: [],
+    mode,
   };
 
   try {
     // 1. Fetch events from PCO
-    const { instances, included } = await fetchApprovedEvents(daysAhead);
+    const { instances, included } = await fetchApprovedEvents(daysAhead, updatedSince);
     result.total = instances.length;
 
     if (instances.length === 0) {
       return result;
     }
 
-    // 2. Build event ID lookup for fetching tags (tags are per-event, not per-instance)
-    const eventIdMap = new Map<string, string>(); // instanceId -> eventId
+    // 2. Build instance -> parent event ID lookup (tags are per-event)
+    const eventIdMap = new Map<string, string>();
     for (const instance of instances) {
       const eventId = instance.relationships?.event?.data?.id;
       if (eventId) {
@@ -86,15 +137,11 @@ export async function syncEvents(daysAhead = 365): Promise<SyncResult> {
       }
     }
 
-    // 3. Fetch rooms and tags, then transform each instance
-    // PCO rate limit: 100 requests per 20 seconds = 200ms between requests
-    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-    const newEvents: NewEvent[] = [];
+    // Cache event-tag fetches by parent event (many instances share a parent).
+    // Storing the promise dedupes concurrent lookups.
+    const eventTagsCache = new Map<string, Promise<string[]>>();
 
-    // Cache event tags to avoid duplicate requests (many instances share the same parent event)
-    const eventTagsCache = new Map<string, string[]>();
     let submissionsByEventId = new Map<string, PcoEventRequestSubmission[]>();
-
     try {
       submissionsByEventId = await fetchEventRequestSubmissionsMap();
     } catch (error) {
@@ -102,39 +149,33 @@ export async function syncEvents(daysAhead = 365): Promise<SyncResult> {
       result.errors.push(`Event request submissions: ${message}`);
     }
 
-    for (const instance of instances) {
+    // 3. Fetch rooms + tags and transform every instance, in parallel.
+    const processed = await mapWithConcurrency(instances, 12, async (instance) => {
       try {
-        // Fetch rooms for this instance
         const roomResources = await fetchInstanceRooms(instance.id);
         const rooms = roomResources.map((r) => r.attributes.name);
 
-        // Delay after rooms request
-        await delay(210);
-
-        // Fetch tags for the parent event (use cache if available)
         const eventId = eventIdMap.get(instance.id);
         let eventType: string | null = null;
         let submissions: PcoEventRequestSubmission[] = [];
+
         if (eventId) {
-          let tags = eventTagsCache.get(eventId);
-          if (!tags) {
-            tags = await fetchEventTags(eventId);
-            eventTagsCache.set(eventId, tags);
-            // Delay only if we made an API call
-            await delay(210);
+          let tagsPromise = eventTagsCache.get(eventId);
+          if (!tagsPromise) {
+            tagsPromise = fetchEventTags(eventId);
+            eventTagsCache.set(eventId, tagsPromise);
           }
+          const tags = await tagsPromise;
           eventType = tags.length > 0 ? tags[0] : null;
         }
 
         if (eventType && EXCLUDED_EVENT_TYPES.has(eventType)) {
-          continue;
+          return null;
         }
 
         if (eventId) {
           submissions = submissionsByEventId.get(eventId) ?? [];
-        }
 
-        if (eventId) {
           await db
             .delete(eventFormSubmissions)
             .where(eq(eventFormSubmissions.eventId, instance.id));
@@ -158,7 +199,6 @@ export async function syncEvents(daysAhead = 365): Promise<SyncResult> {
           }
         }
 
-        // Transform with extras
         const event = transformPcoEventInstance(instance, included, {
           rooms,
           eventType,
@@ -169,26 +209,26 @@ export async function syncEvents(daysAhead = 365): Promise<SyncResult> {
           event.contactEmail = mostRecentSubmission.submitterEmail || event.contactEmail;
           event.contactPhone = mostRecentSubmission.submitterPhone || event.contactPhone;
         }
-        newEvents.push(event);
+        return event;
       } catch (error) {
-        // If fetching extras fails, transform without them
-        const event = transformPcoEventInstance(instance, included);
-        newEvents.push(event);
+        // If fetching extras fails, transform without them.
         const message = error instanceof Error ? error.message : String(error);
         result.errors.push(`Extras for instance ${instance.id}: ${message}`);
+        return transformPcoEventInstance(instance, included);
       }
-    }
+    });
 
-    // 3. Get existing event IDs for comparison
+    const newEvents = processed.filter((event): event is NewEvent => event !== null);
+
+    // 4. Compare against existing events
     const existingEvents = await db.select({ id: events.id }).from(events);
     const existingIds = new Set(existingEvents.map((e) => e.id));
     const incomingIds = new Set(newEvents.map((e) => e.id));
 
-    // 4. Upsert events
-    for (const event of newEvents) {
+    // 5. Upsert events in parallel
+    await mapWithConcurrency(newEvents, 8, async (event) => {
       try {
         if (existingIds.has(event.id)) {
-          // Update existing event
           await db
             .update(events)
             .set({
@@ -210,10 +250,8 @@ export async function syncEvents(daysAhead = 365): Promise<SyncResult> {
             .where(eq(events.id, event.id));
           result.updated++;
         } else {
-          // Insert new event
           await db.insert(events).values(event);
 
-          // Create event_meta with default status
           const meta: NewEventMeta = {
             eventId: event.id,
             status: "not_contacted",
@@ -226,19 +264,22 @@ export async function syncEvents(daysAhead = 365): Promise<SyncResult> {
         const message = error instanceof Error ? error.message : String(error);
         result.errors.push(`Event ${event.id}: ${message}`);
       }
-    }
+    });
 
-    // 5. Delete events no longer in PCO
-    const idsToDelete = [...existingIds].filter((id) => !incomingIds.has(id));
+    // 6. Delete events no longer in PCO — only in a full sync, where the
+    //    fetched set is complete. An incremental sync returns a delta, so a
+    //    missing event just means "unchanged", not "deleted".
+    if (mode === "full") {
+      const idsToDelete = [...existingIds].filter((id) => !incomingIds.has(id));
 
-    if (idsToDelete.length > 0) {
-      // Delete in batches to avoid query size limits
-      const batchSize = 50;
-      for (let i = 0; i < idsToDelete.length; i += batchSize) {
-        const batch = idsToDelete.slice(i, i + batchSize);
-        await db.delete(events).where(inArray(events.id, batch));
+      if (idsToDelete.length > 0) {
+        const batchSize = 50;
+        for (let i = 0; i < idsToDelete.length; i += batchSize) {
+          const batch = idsToDelete.slice(i, i + batchSize);
+          await db.delete(events).where(inArray(events.id, batch));
+        }
+        result.deleted = idsToDelete.length;
       }
-      result.deleted = idsToDelete.length;
     }
 
     return result;
