@@ -31,7 +31,7 @@ export function EventCard({ event }: EventCardProps) {
             <h3 className="line-clamp-2 text-[17px] font-semibold leading-tight text-text-primary">
               {event.title}
             </h3>
-            {event.status === "not_contacted" && event.coordinatorName && (
+            {event.coordinatorName && (
               <Badge
                 title={event.coordinatorName}
                 variant={coordinatorBadgeVariant(event.coordinatorName)}
