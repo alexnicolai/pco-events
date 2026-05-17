@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-type BadgeVariant = "default" | "secondary" | "success" | "warning" | "danger" | "outline" | "pink" | "purple" | "blue";
+type BadgeVariant = "default" | "secondary" | "success" | "warning" | "danger" | "outline" | "pink" | "purple" | "blue" | "yellow";
 
 const variants: Record<BadgeVariant, string> = {
   default: "bg-accent text-white",
@@ -13,6 +13,7 @@ const variants: Record<BadgeVariant, string> = {
   pink: "bg-[#fdf2f8] text-[#db2777]",
   purple: "bg-[#f3e8ff] text-[#9333ea]",
   blue: "bg-[#d8e9ff] text-[#1877f2]",
+  yellow: "bg-[#fef9c3] text-[#ca8a04]",
 };
 
 export function Badge({
