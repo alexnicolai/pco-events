@@ -47,7 +47,12 @@ export async function PATCH(
   const activityNotes: string[] = [];
 
   if (body.status !== undefined) {
-    const label = body.status === "contacted" ? "Contacted" : "Not Contacted";
+    const statusLabels: Record<string, string> = {
+      contacted: "Contacted",
+      not_contacted: "Not Contacted",
+      not_an_event: "Not an Event",
+    };
+    const label = statusLabels[body.status] ?? "Not Contacted";
     activityNotes.push(`Status changed to ${label}`);
   }
 

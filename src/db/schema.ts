@@ -1,7 +1,7 @@
 import { sqliteTable, text, integer, primaryKey } from "drizzle-orm/sqlite-core";
 
 // Status enum values for event tracking
-export const EVENT_STATUSES = ["not_contacted", "contacted"] as const;
+export const EVENT_STATUSES = ["not_contacted", "contacted", "not_an_event"] as const;
 export type EventStatus = (typeof EVENT_STATUSES)[number];
 
 export const EVENT_LOCATION_OPTIONS = [
