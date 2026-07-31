@@ -131,7 +131,7 @@ export function Updates({ eventId, initialNotes }: UpdatesProps) {
     <Card>
       <CardHeader className="pb-2">
         <CardTitle
-          className="cursor-default select-none text-xs uppercase tracking-wide text-[#050505]"
+          className="cursor-default select-none text-xs uppercase tracking-wide"
           onClick={handleTitleClick}
         >
           Updates
