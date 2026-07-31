@@ -29,6 +29,20 @@
   --accent-negative: #fa383e;
   --accent-warning: #f0932b;
 
+  /* Badge tints */
+  --tint-success-bg: #dbfae3;
+  --tint-success-fg: #31a24c;
+  --tint-warning-bg: #ffead3;
+  --tint-warning-fg: #f0932b;
+  --tint-danger-bg: #fee2e2;
+  --tint-danger-fg: #991b1b;
+  --tint-pink-bg: #fdf2f8;
+  --tint-pink-fg: #db2777;
+  --tint-purple-bg: #f3e8ff;
+  --tint-purple-fg: #9333ea;
+  --tint-blue-bg: #d8e9ff;
+  --tint-blue-fg: #1877f2;
+
   /* Typography */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   --font-mono: "Menlo", "Consolas", "Monaco", monospace;
@@ -113,6 +127,18 @@
   --color-border: var(--border-primary);
   --color-border-secondary: var(--border-secondary);
   --color-divider: var(--divider);
+  --color-tint-success-bg: var(--tint-success-bg);
+  --color-tint-success-fg: var(--tint-success-fg);
+  --color-tint-warning-bg: var(--tint-warning-bg);
+  --color-tint-warning-fg: var(--tint-warning-fg);
+  --color-tint-danger-bg: var(--tint-danger-bg);
+  --color-tint-danger-fg: var(--tint-danger-fg);
+  --color-tint-pink-bg: var(--tint-pink-bg);
+  --color-tint-pink-fg: var(--tint-pink-fg);
+  --color-tint-purple-bg: var(--tint-purple-bg);
+  --color-tint-purple-fg: var(--tint-purple-fg);
+  --color-tint-blue-bg: var(--tint-blue-bg);
+  --color-tint-blue-fg: var(--tint-blue-fg);
 
   /* Keep existing naming for compatibility */
   --color-background: var(--background);
@@ -154,6 +180,18 @@
     --border-primary: #3e4042;
     --border-secondary: rgb(51, 54, 56);
     --divider: rgb(51, 54, 56);
+    --tint-success-bg: #17331f;
+    --tint-success-fg: #5ed17c;
+    --tint-warning-bg: #3a2a13;
+    --tint-warning-fg: #f5b45c;
+    --tint-danger-bg: #3b1a1a;
+    --tint-danger-fg: #f87171;
+    --tint-pink-bg: #3a1c2a;
+    --tint-pink-fg: #f472b6;
+    --tint-purple-bg: #2a1f3d;
+    --tint-purple-fg: #c084fc;
+    --tint-blue-bg: #16283f;
+    --tint-blue-fg: #66a9ff;
   }
 }
 
@@ -173,6 +211,18 @@
   --border-primary: #3e4042;
   --border-secondary: rgb(51, 54, 56);
   --divider: rgb(51, 54, 56);
+  --tint-success-bg: #17331f;
+  --tint-success-fg: #5ed17c;
+  --tint-warning-bg: #3a2a13;
+  --tint-warning-fg: #f5b45c;
+  --tint-danger-bg: #3b1a1a;
+  --tint-danger-fg: #f87171;
+  --tint-pink-bg: #3a1c2a;
+  --tint-pink-fg: #f472b6;
+  --tint-purple-bg: #2a1f3d;
+  --tint-purple-fg: #c084fc;
+  --tint-blue-bg: #16283f;
+  --tint-blue-fg: #66a9ff;
 }
 
 /* Components */

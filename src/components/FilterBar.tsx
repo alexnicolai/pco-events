@@ -130,7 +130,7 @@ export function FilterBar({ eventTypes, coordinators }: FilterBarProps) {
           ) : null}
         </Button>
         {activeFilterCount > 0 && (
-          <Button variant="ghost" size="default" onClick={clearFilters} disabled={isPending} className="shrink-0 bg-[#050505] text-white hover:bg-[#050505]/90 hover:text-white">
+          <Button variant="ghost" size="default" onClick={clearFilters} disabled={isPending} className="shrink-0 bg-text-primary text-text-inverse hover:bg-text-primary/90 hover:text-text-inverse">
             Clear Filters
           </Button>
         )}

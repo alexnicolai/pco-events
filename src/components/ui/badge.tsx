@@ -6,13 +6,13 @@ type BadgeVariant = "default" | "secondary" | "success" | "warning" | "danger" |
 const variants: Record<BadgeVariant, string> = {
   default: "bg-accent text-white",
   secondary: "bg-bg-secondary text-text-primary",
-  success: "bg-[#dbfae3] text-[#31a24c]",
-  warning: "bg-[#ffead3] text-[#f0932b]",
-  danger: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200",
+  success: "bg-tint-success-bg text-tint-success-fg",
+  warning: "bg-tint-warning-bg text-tint-warning-fg",
+  danger: "bg-tint-danger-bg text-tint-danger-fg",
   outline: "border border-border text-text-secondary",
-  pink: "bg-[#fdf2f8] text-[#db2777]",
-  purple: "bg-[#f3e8ff] text-[#9333ea]",
-  blue: "bg-[#d8e9ff] text-[#1877f2]",
+  pink: "bg-tint-pink-bg text-tint-pink-fg",
+  purple: "bg-tint-purple-bg text-tint-purple-fg",
+  blue: "bg-tint-blue-bg text-tint-blue-fg",
 };
 
 export function Badge({
