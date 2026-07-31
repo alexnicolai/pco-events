@@ -5,6 +5,8 @@
  * API Docs: https://developer.planning.center/docs/#/apps/calendar
  */
 
+import { mapWithConcurrency } from "./utils";
+
 const PCO_CALENDAR_BASE_URL = "https://api.planningcenteronline.com/calendar/v2";
 const PCO_PEOPLE_BASE_URL = "https://api.planningcenteronline.com/people/v2";
 
@@ -21,10 +23,47 @@ function getAuthHeader(): string {
   return `Basic ${credentials}`;
 }
 
-// Generic fetch wrapper with auth and error handling
-async function pcoFetch<T>(baseUrl: string, endpoint: string, options?: RequestInit): Promise<T> {
+// PCO allows 100 requests per 20s. Stay just under that so concurrent
+// requests can saturate the budget without tripping rate limits.
+const RATE_LIMIT = 90;
+const RATE_WINDOW_MS = 20_000;
+const recentRequests: number[] = [];
+let rateChain: Promise<void> = Promise.resolve();
+
+// Reserve a slot in the rolling rate-limit window. Acquisition is serialized
+// (and fast) while the actual HTTP requests run concurrently.
+function acquireRateSlot(): Promise<void> {
+  const next = rateChain.then(async () => {
+    const prune = () => {
+      const cutoff = Date.now() - RATE_WINDOW_MS;
+      while (recentRequests.length > 0 && recentRequests[0] <= cutoff) {
+        recentRequests.shift();
+      }
+    };
+    prune();
+    if (recentRequests.length >= RATE_LIMIT) {
+      const waitMs = recentRequests[0] + RATE_WINDOW_MS - Date.now() + 50;
+      if (waitMs > 0) await new Promise((resolve) => setTimeout(resolve, waitMs));
+      prune();
+    }
+    recentRequests.push(Date.now());
+  });
+  rateChain = next.catch(() => {});
+  return next;
+}
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Generic fetch wrapper with auth, rate limiting, 429 retry, and error handling
+async function pcoFetch<T>(
+  baseUrl: string,
+  endpoint: string,
+  options?: RequestInit,
+  attempt = 0
+): Promise<T> {
   const url = `${baseUrl}${endpoint}`;
 
+  await acquireRateSlot();
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -33,6 +72,12 @@ async function pcoFetch<T>(baseUrl: string, endpoint: string, options?: RequestI
       ...options?.headers,
     },
   });
+
+  if (response.status === 429 && attempt < 4) {
+    const retryAfter = Number(response.headers.get("Retry-After")) || 2 ** attempt;
+    await delay(retryAfter * 1000);
+    return pcoFetch<T>(baseUrl, endpoint, options, attempt + 1);
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -232,8 +277,13 @@ export interface PcoEventInstancesResponse {
  * Includes related event and event_times
  *
  * @param daysAhead - Number of days to look ahead (default: 365)
+ * @param updatedSince - When provided, only return instances updated at or
+ *   after this ISO timestamp (incremental sync)
  */
-export async function fetchApprovedEvents(daysAhead = 365): Promise<PcoEventInstancesResponse> {
+export async function fetchApprovedEvents(
+  daysAhead = 365,
+  updatedSince?: string
+): Promise<PcoEventInstancesResponse> {
   const today = new Date();
   const futureDate = new Date();
   futureDate.setDate(today.getDate() + daysAhead);
@@ -250,6 +300,10 @@ export async function fetchApprovedEvents(daysAhead = 365): Promise<PcoEventInst
     "include": "event,event.owner,event_times",
     "per_page": "100",
   });
+
+  if (updatedSince) {
+    params.set("where[updated_at][gte]", updatedSince);
+  }
 
   const allInstances: PcoEventInstanceResource[] = [];
   const allIncluded: PcoIncludedResource[] = [];
@@ -358,6 +412,13 @@ async function fetchPersonContact(personId: string): Promise<PersonContactInfo |
   }
 }
 
+interface RawEventRequestRow {
+  eventId: string;
+  submissionId: string;
+  submitterPersonId: string | null;
+  attributes: Record<string, unknown>;
+}
+
 /**
  * Fetch all event request form submissions grouped by event ID.
  * Calendar API only exposes limited submission attributes.
@@ -370,8 +431,8 @@ export async function fetchEventRequestSubmissionsMap(): Promise<
     per_page: "100",
   });
 
-  const submissionsByEventId = new Map<string, PcoEventRequestSubmission[]>();
-  const personContactCache = new Map<string, PersonContactInfo | null>();
+  // Pass 1: paginate through all event requests and collect raw rows.
+  const rows: RawEventRequestRow[] = [];
   let endpoint: string | null = `/event_requests?${params.toString()}`;
 
   while (endpoint !== null) {
@@ -397,45 +458,12 @@ export async function fetchEventRequestSubmissionsMap(): Promise<
       if (!eventId || !submissionId) continue;
 
       const submission = submissionById.get(submissionId);
-      const attributes = submission?.attributes ?? {};
-      const submittedAt = pickFirstString(attributes, ["submitted_at"]) || null;
-
-      const responses: PcoFormResponse[] = [];
-      if (typeof attributes.event_name === "string") {
-        responses.push({ label: "Event Name", value: attributes.event_name });
-      }
-      if (typeof attributes.starts_at === "string") {
-        responses.push({ label: "Start", value: attributes.starts_at });
-      }
-      if (typeof attributes.ends_at === "string") {
-        responses.push({ label: "End", value: attributes.ends_at });
-      }
-      if (typeof attributes.submitted_at === "string") {
-        responses.push({ label: "Submitted At", value: attributes.submitted_at });
-      }
-
-      let personContact: PersonContactInfo | null = null;
-      if (submitterPersonId) {
-        if (!personContactCache.has(submitterPersonId)) {
-          personContactCache.set(submitterPersonId, await fetchPersonContact(submitterPersonId));
-        }
-        personContact = personContactCache.get(submitterPersonId) ?? null;
-      }
-
-      const submissionRecord: PcoEventRequestSubmission = {
-        id: submissionId,
-        submittedAt,
-        submitterName: personContact?.name ?? null,
-        submitterEmail: personContact?.email ?? null,
-        submitterPhone: personContact?.phone ?? null,
+      rows.push({
+        eventId,
+        submissionId,
         submitterPersonId: submitterPersonId ?? null,
-        responses,
-        rawAttributes: attributes,
-      };
-
-      const existing = submissionsByEventId.get(eventId) ?? [];
-      existing.push(submissionRecord);
-      submissionsByEventId.set(eventId, existing);
+        attributes: submission?.attributes ?? {},
+      });
     }
 
     if (response.links?.next) {
@@ -447,6 +475,62 @@ export async function fetchEventRequestSubmissionsMap(): Promise<
     } else {
       endpoint = null;
     }
+  }
+
+  // Pass 2: fetch each unique submitter's contact info in parallel.
+  const personIds = [
+    ...new Set(
+      rows
+        .map((row) => row.submitterPersonId)
+        .filter((id): id is string => id !== null)
+    ),
+  ];
+  const personContacts = await mapWithConcurrency(personIds, 8, (id) =>
+    fetchPersonContact(id)
+  );
+  const personContactById = new Map<string, PersonContactInfo | null>(
+    personIds.map((id, index) => [id, personContacts[index]])
+  );
+
+  // Pass 3: build the grouped submission map.
+  const submissionsByEventId = new Map<string, PcoEventRequestSubmission[]>();
+
+  for (const row of rows) {
+    const { attributes } = row;
+    const submittedAt = pickFirstString(attributes, ["submitted_at"]) || null;
+
+    const responses: PcoFormResponse[] = [];
+    if (typeof attributes.event_name === "string") {
+      responses.push({ label: "Event Name", value: attributes.event_name });
+    }
+    if (typeof attributes.starts_at === "string") {
+      responses.push({ label: "Start", value: attributes.starts_at });
+    }
+    if (typeof attributes.ends_at === "string") {
+      responses.push({ label: "End", value: attributes.ends_at });
+    }
+    if (typeof attributes.submitted_at === "string") {
+      responses.push({ label: "Submitted At", value: attributes.submitted_at });
+    }
+
+    const personContact = row.submitterPersonId
+      ? personContactById.get(row.submitterPersonId) ?? null
+      : null;
+
+    const submissionRecord: PcoEventRequestSubmission = {
+      id: row.submissionId,
+      submittedAt,
+      submitterName: personContact?.name ?? null,
+      submitterEmail: personContact?.email ?? null,
+      submitterPhone: personContact?.phone ?? null,
+      submitterPersonId: row.submitterPersonId,
+      responses,
+      rawAttributes: attributes,
+    };
+
+    const existing = submissionsByEventId.get(row.eventId) ?? [];
+    existing.push(submissionRecord);
+    submissionsByEventId.set(row.eventId, existing);
   }
 
   return submissionsByEventId;

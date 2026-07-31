@@ -45,7 +45,8 @@ export async function POST() {
 
   try {
     lastSyncTime = now;
-    const result = await syncEvents();
+    // Manual syncs are incremental for speed; the daily cron does a full sync.
+    const result = await syncEvents({ mode: "incremental" });
 
     return NextResponse.json({
       ok: result.errors.length === 0,

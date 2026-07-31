@@ -42,6 +42,8 @@
   --tint-purple-fg: #9333ea;
   --tint-blue-bg: #d8e9ff;
   --tint-blue-fg: #1877f2;
+  --tint-yellow-bg: #fef9c3;
+  --tint-yellow-fg: #ca8a04;
 
   /* Typography */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
@@ -139,6 +141,8 @@
   --color-tint-purple-fg: var(--tint-purple-fg);
   --color-tint-blue-bg: var(--tint-blue-bg);
   --color-tint-blue-fg: var(--tint-blue-fg);
+  --color-tint-yellow-bg: var(--tint-yellow-bg);
+  --color-tint-yellow-fg: var(--tint-yellow-fg);
 
   /* Keep existing naming for compatibility */
   --color-background: var(--background);
@@ -192,6 +196,8 @@
     --tint-purple-fg: #c084fc;
     --tint-blue-bg: #16283f;
     --tint-blue-fg: #66a9ff;
+    --tint-yellow-bg: #3a3416;
+    --tint-yellow-fg: #e3c25a;
   }
 }
 
@@ -223,6 +229,8 @@
   --tint-purple-fg: #c084fc;
   --tint-blue-bg: #16283f;
   --tint-blue-fg: #66a9ff;
+  --tint-yellow-bg: #3a3416;
+  --tint-yellow-fg: #e3c25a;
 }
 
 /* Components */

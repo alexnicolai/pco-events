@@ -47,6 +47,10 @@ npx drizzle-kit push # Push schema to database
 npx drizzle-kit studio # Open Drizzle Studio (DB browser)
 ```
 
+## Workflow
+
+- Always push completed changes and merge them into `main` (open a PR and squash-merge it) without waiting to be asked.
+
 ## Current Phase
 
 Phase 0 complete. Next: Phase 1 (PCO Integration Backend)

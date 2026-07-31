@@ -12,7 +12,24 @@ interface EventListClientProps {
   lastSyncedAt?: string;
 }
 
+function groupEventsByMonth(events: EventWithMeta[]): Array<{ label: string; events: EventWithMeta[] }> {
+  const groups = new Map<string, EventWithMeta[]>();
+  for (const event of events) {
+    const date = new Date(event.startAt);
+    const key = `${date.getFullYear()}-${date.getMonth()}`;
+    const label = date.toLocaleString("default", { month: "long", year: "numeric" });
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(event);
+  }
+  return Array.from(groups.entries()).map(([, evts]) => ({
+    label: new Date(evts[0].startAt).toLocaleString("default", { month: "long", year: "numeric" }),
+    events: evts,
+  }));
+}
+
 export function EventListClient({ events, filterOptions, lastSyncedAt }: EventListClientProps) {
+  const groups = groupEventsByMonth(events);
+
   return (
     <>
       <Header lastSyncedAt={lastSyncedAt} eventCount={events.length} />
@@ -21,9 +38,18 @@ export function EventListClient({ events, filterOptions, lastSyncedAt }: EventLi
         {events.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="space-y-2.5 sm:space-y-3">
-            {events.map((event) => (
-              <EventCard key={event.id} event={event} />
+          <div>
+            {groups.map((group, i) => (
+              <div key={group.label} className={i < groups.length - 1 ? "pb-6" : ""}>
+                <h2 className="text-[13px] font-semibold uppercase tracking-wide text-text-secondary" style={{ paddingBottom: "8px" }}>
+                  {group.label}
+                </h2>
+                <div className="space-y-2.5 sm:space-y-3">
+                  {group.events.map((event) => (
+                    <EventCard key={event.id} event={event} />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}

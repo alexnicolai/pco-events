@@ -16,6 +16,7 @@ import { eq, and, sql, desc } from "drizzle-orm";
 const DEFAULT_COORDINATORS: Array<{ name: string; email: string | null }> = [
   { name: "Bianca Nicolai", email: null },
   { name: "Estera Groza", email: null },
+  { name: "Ministry", email: null },
 ];
 
 export interface EventFilters {
@@ -118,6 +119,9 @@ export async function getEvents(filters: EventFilters = {}): Promise<EventWithMe
 
   if (filters.status) {
     filtered = filtered.filter((e) => e.status === filters.status);
+  } else {
+    // Hide "not_an_event" by default — only show when explicitly filtered.
+    filtered = filtered.filter((e) => e.status !== "not_an_event");
   }
 
   return filtered;

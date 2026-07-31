@@ -8,6 +8,7 @@ import { SelectField } from "@/components/ui/select-field";
 const STATUS_OPTIONS: { value: EventStatus; label: string }[] = [
   { value: "not_contacted", label: "Not Contacted" },
   { value: "contacted", label: "Contacted" },
+  { value: "not_an_event", label: "Not an Event" },
 ];
 
 interface StatusSelectorProps {
