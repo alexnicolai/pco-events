@@ -45,6 +45,11 @@
   --tint-yellow-bg: #fef9c3;
   --tint-yellow-fg: #ca8a04;
 
+  /* Attention surface (not-contacted cards) */
+  --attention-bg: #fff7ed;
+  --attention-bg-hover: #ffedd5;
+  --attention-border: #f97316;
+
   /* Typography */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   --font-mono: "Menlo", "Consolas", "Monaco", monospace;
@@ -198,6 +203,9 @@
     --tint-blue-fg: #66a9ff;
     --tint-yellow-bg: #3a3416;
     --tint-yellow-fg: #e3c25a;
+    --attention-bg: #2a1b0d;
+    --attention-bg-hover: #35230f;
+    --attention-border: #d97a2b;
   }
 }
 
@@ -231,6 +239,9 @@
   --tint-blue-fg: #66a9ff;
   --tint-yellow-bg: #3a3416;
   --tint-yellow-fg: #e3c25a;
+  --attention-bg: #2a1b0d;
+  --attention-bg-hover: #35230f;
+  --attention-border: #d97a2b;
 }
 
 /* Components */
@@ -290,6 +301,18 @@
   border: 1px solid var(--border-secondary);
   border-radius: var(--radius-md);
   padding: var(--space-4);
+}
+
+/* Not-contacted cards. A component class, not utilities: cn() has no
+   tailwind-merge, so bg-* passed via className races Card's own bg-bg-card
+   and loses on Tailwind's source order. */
+.card-attention {
+  background: var(--attention-bg);
+  border: 1.5px dotted var(--attention-border);
+}
+
+.card-attention:hover {
+  background: var(--attention-bg-hover);
 }
 
 .card-elevated {
