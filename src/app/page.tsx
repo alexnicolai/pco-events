@@ -7,7 +7,7 @@ interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-type DateRangeKey = "this_month" | "this_year";
+type DateRangeKey = "this_month" | "this_year" | "last_3_months";
 
 function toIsoStartOfDay(year: number, month: number, day: number): string {
   return new Date(Date.UTC(year, month, day, 0, 0, 0, 0)).toISOString();
@@ -21,12 +21,21 @@ function getDateRange(range: DateRangeKey): { startDate?: string; endDate?: stri
   const now = new Date();
   const currentYear = now.getUTCFullYear();
   const currentMonth = now.getUTCMonth();
+  const currentDay = now.getUTCDate();
 
   if (range === "this_month") {
     const lastDayOfMonth = new Date(Date.UTC(currentYear, currentMonth + 1, 0)).getUTCDate();
     return {
       startDate: toIsoStartOfDay(currentYear, currentMonth, 1),
       endDate: toIsoEndOfDay(currentYear, currentMonth, lastDayOfMonth),
+    };
+  }
+
+  if (range === "last_3_months") {
+    const start = new Date(Date.UTC(currentYear, currentMonth - 3, currentDay, 0, 0, 0, 0));
+    return {
+      startDate: start.toISOString(),
+      endDate: toIsoEndOfDay(currentYear, currentMonth, currentDay),
     };
   }
 
@@ -47,7 +56,9 @@ export default async function Home({ searchParams }: PageProps) {
   const params = await searchParams;
   const dateRangeParam = typeof params.dateRange === "string" ? params.dateRange : "this_year";
   const dateRange: DateRangeKey =
-    dateRangeParam === "this_month" || dateRangeParam === "this_year"
+    dateRangeParam === "this_month" ||
+    dateRangeParam === "this_year" ||
+    dateRangeParam === "last_3_months"
       ? dateRangeParam
       : "this_year";
   const resolvedDateRange = getDateRange(dateRange);

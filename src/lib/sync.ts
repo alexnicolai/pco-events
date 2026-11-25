@@ -26,6 +26,7 @@ export type SyncMode = "full" | "incremental";
 
 export interface SyncOptions {
   daysAhead?: number;
+  daysBack?: number;
   mode?: SyncMode;
 }
 
@@ -93,10 +94,11 @@ async function getIncrementalCursor(): Promise<string | null> {
  *   the PCO client enforces the API rate limit
  *
  * @param options.daysAhead - Days to look ahead (default: 365)
+ * @param options.daysBack - Days to look back for past events (default: 90)
  * @param options.mode - "full" (default) or "incremental"
  */
 export async function syncEvents(options: SyncOptions = {}): Promise<SyncResult> {
-  const { daysAhead = 365 } = options;
+  const { daysAhead = 365, daysBack = 90 } = options;
   let mode: SyncMode = options.mode ?? "full";
 
   let updatedSince: string | undefined;
@@ -121,7 +123,7 @@ export async function syncEvents(options: SyncOptions = {}): Promise<SyncResult>
 
   try {
     // 1. Fetch events from PCO
-    const { instances, included } = await fetchApprovedEvents(daysAhead, updatedSince);
+    const { instances, included } = await fetchApprovedEvents(daysAhead, daysBack, updatedSince);
     result.total = instances.length;
 
     if (instances.length === 0) {
