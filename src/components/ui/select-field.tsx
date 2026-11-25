@@ -20,7 +20,7 @@ export const SelectField = React.forwardRef<HTMLSelectElement, SelectFieldProps>
         <select
           ref={ref}
           className={cn(
-            "h-11 w-full appearance-none rounded-2xl border-[0.5px] border-[#ced0d4] bg-[#fafafa] px-4 pr-10 text-[15px] text-text-primary",
+            "h-11 w-full appearance-none rounded-2xl border-[0.5px] border-border bg-bg-primary px-4 pr-10 text-[15px] text-text-primary",
             "shadow-[0px_1px_1px_0px_rgba(0,0,0,0.12),0px_0px_2px_0px_rgba(0,0,0,0.12)]",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
             "disabled:cursor-not-allowed disabled:opacity-50",

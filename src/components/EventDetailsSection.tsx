@@ -150,7 +150,7 @@ export function EventDetailsSection({
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between gap-3 pb-3">
-        <CardTitle className="text-sm uppercase tracking-wide text-[#050505]">
+        <CardTitle className="text-sm uppercase tracking-wide">
           Event Details
         </CardTitle>
         {!isEditing && (

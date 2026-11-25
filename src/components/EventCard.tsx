@@ -29,7 +29,7 @@ export function EventCard({ event }: EventCardProps) {
       <Card
         className={
           notContacted
-            ? "border-[1.5px] border-dotted border-orange-500 bg-orange-50 transition-colors hover:bg-orange-100"
+            ? "card-attention transition-colors"
             : "transition-colors hover:bg-bg-hover"
         }
       >

@@ -56,7 +56,7 @@ export function Header({ lastSyncedAt, eventCount }: HeaderProps) {
               Synced {formatRelativeTime(lastSyncedAt)}
             </Badge>
           )}
-          <Button onClick={handleSync} disabled={syncing} size="default" className="w-[120px] bg-black hover:bg-gray-900 focus-visible:ring-black">
+          <Button onClick={handleSync} disabled={syncing} size="default" variant="contrast" className="w-[120px]">
             {syncing ? "Syncing..." : "Sync Events"}
           </Button>
         </div>

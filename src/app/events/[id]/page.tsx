@@ -29,7 +29,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-xs uppercase tracking-wide text-[#050505]">
+        <CardTitle className="text-xs uppercase tracking-wide">
           {title}
         </CardTitle>
       </CardHeader>
