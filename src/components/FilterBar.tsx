@@ -27,7 +27,7 @@ const STATUS_OPTIONS: { value: EventStatus | ""; label: string }[] = [
   { value: "not_an_event", label: "Not an Event" },
 ];
 
-type DateRange = "this_month" | "this_year";
+type DateRange = "this_month" | "this_year" | "last_3_months";
 
 type DraftFilters = {
   coordinatorId: string;
@@ -44,7 +44,12 @@ export function FilterBar({ eventTypes, coordinators }: FilterBarProps) {
 
   const current = useMemo<DraftFilters>(() => {
     const dateRangeParam = searchParams.get("dateRange");
-    const dateRange: DateRange = dateRangeParam === "this_month" ? "this_month" : "this_year";
+    const dateRange: DateRange =
+      dateRangeParam === "this_month"
+        ? "this_month"
+        : dateRangeParam === "last_3_months"
+          ? "last_3_months"
+          : "this_year";
 
     return {
       coordinatorId: searchParams.get("coordinatorId") ?? "",
@@ -175,6 +180,7 @@ export function FilterBar({ eventTypes, coordinators }: FilterBarProps) {
                 }
               >
                 <option value="this_month">This month</option>
+                <option value="last_3_months">Last 3 months</option>
                 <option value="this_year">This year</option>
               </SelectField>
             </div>

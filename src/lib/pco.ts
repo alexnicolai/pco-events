@@ -273,28 +273,32 @@ export interface PcoEventInstancesResponse {
 
 /**
  * Fetch approved event instances from PCO Calendar
- * Filters for future events within date range
+ * Returns instances within [today - daysBack, today + daysAhead]
  * Includes related event and event_times
  *
  * @param daysAhead - Number of days to look ahead (default: 365)
+ * @param daysBack - Number of days to look back for past events (default: 90)
  * @param updatedSince - When provided, only return instances updated at or
  *   after this ISO timestamp (incremental sync)
  */
 export async function fetchApprovedEvents(
   daysAhead = 365,
+  daysBack = 90,
   updatedSince?: string
 ): Promise<PcoEventInstancesResponse> {
   const today = new Date();
   const futureDate = new Date();
   futureDate.setDate(today.getDate() + daysAhead);
+  const pastDate = new Date();
+  pastDate.setDate(today.getDate() - daysBack);
 
-  // Format dates as ISO strings
-  const startDate = today.toISOString();
+  const startDate = pastDate.toISOString();
   const endDate = futureDate.toISOString();
 
-  // Build query params for event_instances endpoint
+  // Build query params for event_instances endpoint. "future" is dropped so
+  // past instances in the window are returned too; "approved" stays.
   const params = new URLSearchParams({
-    "filter": "future,approved",
+    "filter": "approved",
     "where[starts_at][gte]": startDate,
     "where[starts_at][lte]": endDate,
     "include": "event,event.owner,event_times",
